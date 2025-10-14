@@ -1,0 +1,117 @@
+{% extends "myapp/base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Create Flashcard Set</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Flashcard Set Details -->
+    <div class="card mb-3 p-3 shadow-sm">
+        <h4 class="mb-3">Set Details</h4>
+        {{ set_form.as_p }}
+    </div>
+
+    <!-- Flashcards -->
+    <div class="card mb-3 p-3 shadow-sm" id="flashcards-container">
+        <h4 class="mb-3">Flashcards</h4>
+        {{ formset.management_form }}
+        {% for form in formset %}
+        <div class="flashcard-item mb-2 p-2 border rounded d-flex gap-2 align-items-start">
+            <div class="flex-fill">
+                {{ form.front.label_tag }} {{ form.front }}
+            </div>
+            <div class="flex-fill">
+                {{ form.back.label_tag }} {{ form.back }}
+            </div>
+            <div class="align-self-start">
+                {% if form.instance.pk %}
+                {{ form.DELETE.label_tag }} {{ form.DELETE }}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" class="btn btn-outline-primary mb-3" id="add-flashcard-btn">+ Add Flashcard</button>
+    <br>
+    <button type="submit" class="btn btn-primary">Save Flashcard Set</button>
+</form>
+
+<script>
+const addBtn = document.getElementById("add-flashcard-btn");
+const container = document.getElementById("flashcards-container");
+const totalForms = document.querySelector('input[name$="TOTAL_FORMS"]'); // safer selector
+
+addBtn.addEventListener("click", () => {
+    const currentFormCount = parseInt(totalForms.value);
+
+    const emptyForm = document.createElement("div");
+    emptyForm.className = "flashcard-item mb-2 p-2 border rounded d-flex gap-2 align-items-start new-card";
+
+    emptyForm.innerHTML = `
+        <div class="flex-fill">
+            <label for="id_flashcard_set-${currentFormCount}-front">Front:</label>
+            <textarea name="flashcard_set-${currentFormCount}-front" rows="1" class="form-control" id="id_flashcard_set-${currentFormCount}-front"></textarea>
+        </div>
+        <div class="flex-fill">
+            <label for="id_flashcard_set-${currentFormCount}-back">Back:</label>
+            <textarea name="flashcard_set-${currentFormCount}-back" rows="2" class="form-control" id="id_flashcard_set-${currentFormCount}-back"></textarea>
+        </div>
+    `;
+
+    container.appendChild(emptyForm);
+    totalForms.value = currentFormCount + 1;
+
+    // Trigger slide-down/fade-in animation
+    requestAnimationFrame(() => {
+        emptyForm.classList.remove("new-card");
+    });
+});
+</script>
+
+<style>
+/* Inputs, textareas, selects styling */
+input, textarea, select {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.5);
+}
+
+/* Dropdown smooth open */
+select {
+    transition: all 0.3s ease;
+}
+
+/* Flashcard appearance */
+.flashcard-item {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.flashcard-item.new-card {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+/* Label styling */
+.flashcard-item label {
+    font-weight: 600;
+}
+
+/* Prevent textarea resizing */
+.flashcard-item textarea {
+    resize: none;
+}
+</style>
+{% endblock %}

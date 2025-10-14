@@ -1,0 +1,266 @@
+{% extends "myapp/base_no_sidebar.html" %}
+{% load static %}
+
+{% block content %}
+
+<head>
+  <link rel="stylesheet" href="{% static 'css/individual_components/index.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/individual_components/onboarding.css' %}">
+</head>
+
+<div class="onboarding-container">
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  
+  <!-- Step Indicators -->
+  <div class="step-indicators">
+    <div class="step-indicator active" data-step="1">
+      <div class="step-circle">1</div>
+      <span class="step-label">Name</span>
+    </div>
+    <div class="step-indicator" data-step="2">
+      <div class="step-circle">2</div>
+      <span class="step-label">Goals</span>
+    </div>
+    <div class="step-indicator" data-step="3">
+      <div class="step-circle">3</div>
+      <span class="step-label">Referral</span>
+    </div>
+  </div>
+
+  <form method="post" id="onboardingForm">
+    {% csrf_token %}
+
+    <!-- Step 1: Username -->
+    <div class="form-step active" data-step="1">
+      <div class="step-content">
+        <h1 class="step-title">What should we call you? 👋</h1>
+        <p class="step-description">Choose a username to get started</p>
+        <div class="input-wrapper">
+          {{ form.username }}
+        </div>
+        <button type="button" class="btn-continue" data-next="2">
+          Continue
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Goals -->
+    <div class="form-step" data-step="2">
+      <div class="step-content">
+        <h1 class="step-title">What are your goals? 🎯</h1>
+        <p class="step-description">Select all that apply</p>
+        <div class="goal-buttons">
+          {% for value, label, icon in GOAL_CHOICES %}
+            <button type="button" class="goal-btn" data-value="{{ value }}">
+              <i class="{{ icon }}"></i>
+              <span>{{ label }}</span>
+            </button>
+          {% endfor %}
+        </div>
+        <div style="display:none;">
+          {% for value, label in form.goals.field.choices %}
+            <input type="checkbox" name="goals" value="{{ value }}">
+          {% endfor %}
+        </div>
+        <div class="button-group">
+          <button type="button" class="btn-back" data-prev="1">
+            <i class="fas fa-arrow-left"></i>
+            Back
+          </button>
+          <button type="button" class="btn-continue" data-next="3">
+            Continue
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Referral -->
+    <div class="form-step" data-step="3">
+      <div class="step-content">
+        <h1 class="step-title">Where did you find us? 🔍</h1>
+        <p class="step-description">Help us understand how you discovered our platform</p>
+        <div class="referral-buttons">
+          {% for value, label, icon in REFERRAL_CHOICES %}
+            <button type="button" class="referral-btn" data-value="{{ value }}">
+              <i class="{{ icon }}"></i>
+              <span>{{ label }}</span>
+            </button>
+          {% endfor %}
+        </div>
+        <div style="display:none;">
+          {% for value, label in form.referral_source.field.choices %}
+            <input type="radio" name="referral_source" value="{{ value }}">
+          {% endfor %}
+        </div>
+        <div id="referral-other-field" class="other-field">
+          {{ form.referral_other }}
+        </div>
+        <div class="button-group">
+          <button type="button" class="btn-back" data-prev="2">
+            <i class="fas fa-arrow-left"></i>
+            Back
+          </button>
+          <button type="submit" class="btn-submit">
+            Get Started
+            <i class="fas fa-check"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("onboardingForm");
+  const steps = document.querySelectorAll(".form-step");
+  const stepIndicators = document.querySelectorAll(".step-indicator");
+  const progressFill = document.getElementById("progressFill");
+  let currentStep = 1;
+
+
+  // Update progress bar and indicators
+  function updateProgress(step) {
+    const progress = ((step - 1) / 3) * 100;
+    progressFill.style.width = progress + "%";
+    
+    stepIndicators.forEach((indicator, index) => {
+      if (index < step) {
+        indicator.classList.add("active");
+        indicator.classList.add("completed");
+      } else if (index === step - 1) {
+        indicator.classList.add("active");
+        indicator.classList.remove("completed");
+      } else {
+        indicator.classList.remove("active");
+        indicator.classList.remove("completed");
+      }
+    });
+  }
+
+  // Navigate to step
+  function goToStep(stepNumber) {
+    steps.forEach(step => {
+      step.classList.remove("active", "prev", "next");
+      const stepNum = parseInt(step.dataset.step);
+      if (stepNum === stepNumber) {
+        step.classList.add("active");
+      } else if (stepNum < stepNumber) {
+        step.classList.add("prev");
+      } else {
+        step.classList.add("next");
+      }
+    });
+    currentStep = stepNumber;
+    updateProgress(stepNumber);
+  }
+
+  // Handle goal button toggles
+  const goalButtons = document.querySelectorAll(".goal-btn");
+  const goalCheckboxes = document.querySelectorAll("input[name='goals']");
+  goalButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const value = btn.dataset.value;
+      const checkbox = Array.from(goalCheckboxes).find(cb => cb.value === value);
+      checkbox.checked = !checkbox.checked;
+      btn.classList.toggle("selected");
+    });
+  });
+
+  // Handle referral button toggles
+  const referralButtons = document.querySelectorAll(".referral-btn");
+  const referralRadios = document.querySelectorAll("input[name='referral_source']");
+  referralButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const value = btn.dataset.value;
+      referralRadios.forEach(r => r.checked = (r.value === value));
+      referralButtons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      document.getElementById("referral-other-field").style.display = value === "other" ? "block" : "none";
+    });
+  });
+
+  // Continue buttons
+  document.querySelectorAll(".btn-continue").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const nextStep = parseInt(btn.dataset.next);
+      goToStep(nextStep);
+    });
+  });
+
+  // Back buttons
+  document.querySelectorAll(".btn-back").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const prevStep = parseInt(btn.dataset.prev);
+      goToStep(prevStep);
+    });
+  });
+
+  // AJAX submit
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector(".btn-submit");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      const csrftoken = getCookie("csrftoken");
+
+    fetch("", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 500);
+      } else {
+        console.log("Form errors:", data.errors);
+        alert("Please fix the errors before continuing.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Get Started <i class="fas fa-check"></i>';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Get Started <i class="fas fa-check"></i>';
+    });
+  });
+
+  // Initialize
+  updateProgress(1);
+});
+</script>
+{% endblock %}

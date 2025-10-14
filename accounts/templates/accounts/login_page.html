@@ -1,0 +1,138 @@
+{% extends 'myapp/base_no_sidebar.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
+  <div class="row w-100 shadow rounded overflow-hidden" style="max-width: 1000px; background:#fff;">
+    
+    <!-- Left: Form -->
+    <div class="col-md-6 p-5">
+      <h1 class="mb-4">Summit Study</h1>
+      <h3 class="mb-4">Welcome back — sign in</h3>
+
+      <form id="loginForm" method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.username.label_tag }}
+          {{ form.username|add_class:"form-control"|attr:"placeholder:Email" }}
+          <div class="text-danger" id="username-error"></div>
+        </div>
+
+        <div class="mb-3">
+          {{ form.password.label_tag }}
+          {{ form.password|add_class:"form-control"|attr:"placeholder:Password" }}
+          <div class="text-danger" id="password-error"></div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <label class="form-check-label" style="font-size:0.9rem;">
+            <input type="checkbox" name="remember" class="form-check-input me-1"> Remember me
+          </label>
+          <a href="#" class="small">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-dark w-100 py-2">Sign In</button>
+      </form>
+
+      {% if form.errors %}
+  <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+    <ul class="mb-0">
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+          <li>
+            {% if field != '__all__' %}
+              <strong>{{ field|capfirst }}:</strong>
+            {% endif %}
+            {{ error }}
+          </li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+{% endif %}
+
+
+    </div>
+
+    <!-- Right: Image -->
+    <div class="col-md-6 d-none d-md-block" 
+         style="background: url('{% static "images/blue-logo.png" %}') center/cover no-repeat;">
+    </div>
+
+  </div>
+</div>
+
+<style>
+.form-control {
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+}
+.form-control:focus {
+  border-color: #0077cc;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.15);
+}
+.btn-dark {
+  background: #000;
+  border-radius: 8px;
+}
+.btn-dark:hover {
+  background: #333;
+}
+.text-danger {
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Clear previous errors
+        document.getElementById("username-error").textContent = "";
+        document.getElementById("password-error").textContent = "";
+
+        const formData = new FormData(form);
+
+        fetch("{% url 'accounts:login_view' %}", {  // Make sure this matches your urls.py
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            },
+        })
+        .then(res => {
+            if (!res.ok) return res.json().then(data => Promise.reject(data));
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect;
+            }
+        })
+        .catch(data => {
+            if (data.errors) {
+                if (data.errors.email) {
+                    document.getElementById("email-error").textContent = data.errors.email.join(", ");
+                }
+                if (data.errors.password) {
+                    document.getElementById("password-error").textContent = data.errors.password.join(", ");
+                }
+            } else {
+                console.error("Unexpected error", data);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

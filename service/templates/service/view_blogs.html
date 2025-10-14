@@ -1,0 +1,65 @@
+{% extends 'service/base.html' %}
+{% block content %}
+
+<div class="container my-5">
+
+  <!-- Main Title & Description -->
+  <div class="text-center mb-5">
+    <h1 class="fw-bold">The Summit Study Blog</h1>
+    <p class="text-muted">Insights, study hacks, and updates to help you reach your peak.</p>
+  </div>
+
+  <!-- Recent Posts -->
+  <h3 class="mb-4">📌 Recent Posts</h3>
+
+  <!-- Blog Grid -->
+  <div class="row g-4">
+    {% for blog in blogs %}
+      <div class="col-md-4">
+        <a href="{% url 'service:blog' blog.id %}" class="text-decoration-none text-dark">
+          <div class="card h-100 shadow-sm blog-card">
+            {% if blog.cover_image %}
+              <img src="{{ blog.cover_image.url }}" alt="{{ blog.title }}" class="card-img-top" style="height: 220px; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title fw-semibold">{{ blog.title }}</h5>
+              <p class="card-text text-muted small">By {{ blog.created_by }} · {{ blog.created_at|date:"d M Y" }}</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <p>No blog posts found.</p>
+    {% endfor %}
+  </div>
+
+  <!-- See More Button -->
+  {% if blogs|length > 6 %}
+    <div class="text-center mt-4">
+      <a href="{% url 'service:blog_list' %}" class="btn btn-outline-primary">See More</a>
+    </div>
+  {% endif %}
+
+  <!-- Admin Blog Creation -->
+  {% if request.user.is_superuser %}
+    <div class="mt-5">
+      <a href="{% url 'service:create_blog' %}" class="btn btn-primary">Create New Blog Post</a>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Hover Animation -->
+<style>
+  .blog-card {
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .blog-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+</style>
+
+{% endblock %}

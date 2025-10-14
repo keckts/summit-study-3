@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load custom_filters %} <!--located in templatetags folder-->
+    {% load compress %}
+    {% include 'extras/modal.html' %}
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit Study</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://kit.fontawesome.com/64b900288d.js" crossorigin="anonymous"></script>
+
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'src/output.css' %}">
+    {% endcompress %}
+
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        body.page-loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sidebar a.credits {
+            font-weight: bold;
+            color: #f39c12; /* gold-like */
+        }
+
+        .sidebar a.credits i {
+            color: #e67e22; /* orange accent */
+            margin-right: 6px;
+        }
+
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 200px;
+            background-color: #fff;
+            color: #111827;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e5e7eb;
+            margin: 0;
+        }
+
+        .sidebar .sidebar-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar a {
+            color: #374151;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .sidebar a.active, .sidebar a:hover {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 500;
+        }
+
+        .sidebar a i {
+            margin-right: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 2rem;
+            background-color: #f3f4f6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+            }
+
+            .sidebar .sidebar-header {
+                display: none;
+            }
+
+            .sidebar a {
+                flex: 1 0 auto;
+                justify-content: center;
+                padding: 0.5rem;
+            }
+        }
+
+        a {
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        document.body.classList.add("page-loaded");
+      });
+    </script>
+
+    <!-- Sidebar -->
+        <div class="sidebar">
+    <div class="sidebar-header">Summit Study</div>
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-house-door"></i> Dashboard
+    </a>
+
+    <a href="{% url 'extras:chatbot' %}" class="{% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}">
+        <i class="bi bi-robot"></i> AI Chatbot
+    </a>
+    <a href="{% url 'writing_tasks' %}" class="{% if request.resolver_match.url_name == 'writing_tasks' %}active{% endif %}">
+        <i class="bi bi-pencil-square"></i> Writing Tasks
+    </a>
+    <a href="{% url 'practice_tests' %}" class="{% if request.resolver_match.url_name == 'practice_tests' %}active{% endif %}">
+        <i class="bi bi-journal-check"></i> Practice Tests
+    </a>
+    <a href="{% url 'flashcard_sets' %}" class="{% if request.resolver_match.url_name == 'flashcard_sets' or request.resolver_match.url_name == 'create_flashcard_set' %}active{% endif %}">
+        <i class="bi bi-card-list"></i> Flashcards
+    </a>
+    <a href="{% url 'extras:programs' %}" class="{% if request.resolver_match.url_name == 'programs' or request.resolver_match.url_name == 'create_program' %}active{% endif %}">
+        <i class="bi bi-collection"></i> Programs
+    </a>
+    <a href="{% url 'progress:progress_page' %}" class="{% if request.resolver_match.url_name == 'progress_page' %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i> Progress
+    </a>
+
+    <a href="{% url 'accounts:subscriptions' %}" class="{% if request.resolver_match.url_name == 'subscriptions' %}active{% endif %}">
+        <i class="bi bi-credit-card"></i> Subscriptions
+    </a>
+
+    <!-- More toggle button -->
+    <a href="#" id="more-toggle">
+        <i class="bi bi-three-dots"></i> More
+    </a>
+
+    <div id="more-links" style="display: none;">
+        <a href="{% url 'service:view_blogs' %}" class="{% if request.resolver_match.url_name == 'view_blogs' or request.resolver_match.url_name == 'blog' or request.resolver_match.url_name == 'create_blog' %}active{% endif %}">
+            <i class="bi bi-journal-text"></i> Blog
+        </a>
+        <a href="{% url 'extras:achievements' %}" class="{% if request.resolver_match.url_name == 'achievements' %}active{% endif %}">
+            <i class="bi bi-trophy"></i> Achievements
+        </a>
+
+        <a href="{% url 'service:support' %}" class="{% if request.resolver_match.url_name == 'support' %}active{% endif %}">
+            <i class="bi bi-life-preserver"></i> Support
+        </a>
+
+        <a href="{% url 'service:terms_and_conditions' %}" class="{% if request.resolver_match.url_name == 'terms_and_conditions' %}active{% endif %}">
+            <i class="bi bi-file-earmark-text"></i> Terms & Conditions
+        </a>
+
+        <a href="{% url 'service:privacy_policy' %}" class="{% if request.resolver_match.url_name == 'privacy_policy' %}active{% endif %}">
+            <i class="bi bi-shield-lock"></i> Privacy Policy
+        </a>
+
+        <a href="{% url 'service:about_us' %}" class="{% if request.resolver_match.url_name == 'about_us' %}active{% endif %}">
+            <i class="bi bi-people"></i> About Us
+        </a>
+
+        <a href="{% url 'accounts:settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+            <i class="bi bi-gear"></i> <b>Settings</b>
+        </a>
+    </div>
+
+
+
+    <a href="#" class="credits">
+        <i class="bi bi-lightning-charge-fill"></i> {{ request.user.ai_credits|format_credits }} Credits
+    </a>
+</div>
+
+<script>
+    const toggleBtn = document.getElementById('more-toggle');
+    const moreLinks = document.getElementById('more-links');
+
+    toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (moreLinks.style.display === 'none') {
+            moreLinks.style.display = 'block';
+        } else {
+            moreLinks.style.display = 'none';
+        }
+    });
+</script>
+
+
+    <!-- Page Content -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+</body>
+</html>

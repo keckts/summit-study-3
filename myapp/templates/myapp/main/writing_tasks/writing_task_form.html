@@ -1,0 +1,23 @@
+{% extends "myapp/base.html" %}
+
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+
+<form method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button type="submit" class="btn btn-primary">
+    {% if task %}Update{% else %}Create{% endif %} Task
+  </button>
+
+  {% if task %}
+    <button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Delete this task?')">
+        Delete Task
+    </button>
+  {% endif %}
+</form>
+
+
+{% endblock %}

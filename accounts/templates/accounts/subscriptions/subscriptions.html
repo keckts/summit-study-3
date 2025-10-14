@@ -1,0 +1,54 @@
+{% extends 'myapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+  <head>
+    <script src="{% static 'js/subscriptions/stripe.js' %}"></script>
+  </head>
+  
+<h2>Choose a Plan</h2>
+
+<div class="row">
+    {% for plan in plans %}
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ plan.name }}</h5>
+                <p class="card-text">${{ plan.price }}/month</p>
+                <form action="{% url 'create_checkout_session' plan.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- template -->
+<button id="checkout-btn" data-plan-id="{{ plan.id }}">Subscribe</button>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  const stripe = Stripe("{{ STRIPE_PUBLISHABLE_KEY }}"); // pass from Django context
+  document.getElementById("checkout-btn").addEventListener("click", async (e) => {
+    const planId = e.target.dataset.planId;
+    const res = await fetch(`/billing/create-checkout-session/${planId}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "Content-Type": "application/json"
+      },
+    });
+    const data = await res.json();
+    if (data.error) return alert(data.error);
+    const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+    if (result.error) {
+      alert(result.error.message);
+    }
+  });
+</script>
+
+{% endblock %}
+

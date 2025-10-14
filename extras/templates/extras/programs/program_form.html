@@ -1,0 +1,284 @@
+{% extends "myapp/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-5">
+  <h2>{% if editing %}Edit{% else %}Create{% endif %} Program</h2>
+  
+  <form method="post" novalidate id="program-form">
+    {% csrf_token %}
+    
+    <!-- Program details -->
+    <div class="mb-4">
+      {% crispy program_form %}
+    </div>
+    
+    <!-- Weeks Section -->
+    <h4 class="mt-4">Weeks</h4>
+    {{ week_formset.management_form }}
+    
+    <div id="week-formset">
+      {% for wform in week_formset %}
+        <div class="card mb-3 week-form" data-week-index="{{ forloop.counter0 }}">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Week {{ forloop.counter }}</span>
+            {% if not forloop.first %}
+              <button type="button" class="btn btn-sm btn-danger remove-week">Remove Week</button>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <div class="week-fields">
+              {% crispy wform %}
+            </div>
+            
+            <!-- Activities for this week -->
+            <h5 class="mt-3">Activities</h5>
+            {{ wform.activity_formset.management_form }}
+            
+            <div class="activity-list" data-week-index="{{ forloop.counter0 }}">
+              {% for aform in wform.activity_formset %}
+                <div class="card mb-2 activity-form">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        {% crispy aform %}
+                      </div>
+                      {% if not forloop.first %}
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-activity">Remove</button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            
+            <button type="button" class="btn btn-sm btn-outline-primary add-activity mt-2" data-week-index="{{ forloop.counter0 }}">
+              Add Activity
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <button type="button" class="btn btn-primary mb-3" id="add-week">Add Week</button>
+    <br>
+    <button type="submit" class="btn btn-success">Save Program</button>
+  </form>
+</div>
+
+<script>
+(function(){
+  const weekContainer = document.getElementById('week-formset');
+  const addWeekBtn = document.getElementById('add-week');
+  
+  // Get management form inputs
+  function getWeekTotalInput() {
+    return document.querySelector('input[name="weeks-TOTAL_FORMS"]');
+  }
+  
+  function getActivityTotalInput(weekIndex) {
+    return document.querySelector(`input[name="activities-${weekIndex}-TOTAL_FORMS"]`);
+  }
+  
+  // Update all week indexes after add/remove
+  function updateWeekIndexes() {
+    const weekForms = weekContainer.querySelectorAll('.week-form');
+    const totalInput = getWeekTotalInput();
+    
+    weekForms.forEach((card, newIdx) => {
+      const oldIdx = card.getAttribute('data-week-index');
+      card.setAttribute('data-week-index', newIdx);
+      
+      // Update all form field names and IDs within this week
+      card.querySelectorAll('input, select, textarea').forEach(field => {
+        if (field.name && field.name.includes('weeks-')) {
+          field.name = field.name.replace(`weeks-${oldIdx}-`, `weeks-${newIdx}-`);
+          field.id = field.id.replace(`id_weeks-${oldIdx}-`, `id_weeks-${newIdx}-`);
+        }
+        // Update activity formset prefix
+        if (field.name && field.name.includes('activities-')) {
+          field.name = field.name.replace(`activities-${oldIdx}-`, `activities-${newIdx}-`);
+          field.id = field.id.replace(`id_activities-${oldIdx}-`, `id_activities-${newIdx}-`);
+        }
+      });
+      
+      // Update labels
+      card.querySelectorAll('label').forEach(label => {
+        if (label.htmlFor && label.htmlFor.includes('id_weeks-')) {
+          label.htmlFor = label.htmlFor.replace(`id_weeks-${oldIdx}-`, `id_weeks-${newIdx}-`);
+        }
+        if (label.htmlFor && label.htmlFor.includes('id_activities-')) {
+          label.htmlFor = label.htmlFor.replace(`id_activities-${oldIdx}-`, `id_activities-${newIdx}-`);
+        }
+      });
+      
+      // Update activity list data attribute
+      const activityList = card.querySelector('.activity-list');
+      if (activityList) {
+        activityList.setAttribute('data-week-index', newIdx);
+      }
+      
+      // Update add activity button
+      const addActivityBtn = card.querySelector('.add-activity');
+      if (addActivityBtn) {
+        addActivityBtn.setAttribute('data-week-index', newIdx);
+      }
+      
+      // Update card header
+      const header = card.querySelector('.card-header span');
+      if (header) {
+        header.textContent = `Week ${newIdx + 1}`;
+      }
+    });
+    
+    totalInput.value = weekForms.length;
+  }
+  
+  // Add new week
+  addWeekBtn.addEventListener('click', () => {
+    const totalInput = getWeekTotalInput();
+    const currentTotal = parseInt(totalInput.value, 10);
+    const firstWeek = weekContainer.querySelector('.week-form');
+    
+    if (!firstWeek) return;
+    
+    // Clone the first week form
+    const clone = firstWeek.cloneNode(true);
+    
+    // Clear all input values in the cloned form
+    clone.querySelectorAll('input:not([type="hidden"]), textarea, select').forEach(field => {
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        field.checked = false;
+      } else {
+        field.value = '';
+      }
+    });
+    
+    // Reset activity count to 1 (keep only first activity form)
+    const activityList = clone.querySelector('.activity-list');
+    const activityForms = activityList.querySelectorAll('.activity-form');
+    activityForms.forEach((form, idx) => {
+      if (idx > 0) form.remove();
+    });
+    
+    // Add remove button if it doesn't exist
+    const header = clone.querySelector('.card-header');
+    if (!header.querySelector('.remove-week')) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-sm btn-danger remove-week';
+      removeBtn.textContent = 'Remove Week';
+      header.appendChild(removeBtn);
+    }
+    
+    weekContainer.appendChild(clone);
+    totalInput.value = currentTotal + 1;
+    updateWeekIndexes();
+  });
+  
+  // Remove week (delegated)
+  weekContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-week')) {
+      const weekForm = e.target.closest('.week-form');
+      const deleteCheckbox = weekForm.querySelector('input[name$="-DELETE"]');
+      
+      if (deleteCheckbox) {
+        // Mark for deletion if it's an existing week
+        deleteCheckbox.checked = true;
+        weekForm.style.display = 'none';
+      } else {
+        // Remove from DOM if it's a new week
+        weekForm.remove();
+      }
+      
+      updateWeekIndexes();
+    }
+  });
+  
+  // Add activity (delegated)
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('add-activity')) {
+      const weekIndex = e.target.getAttribute('data-week-index');
+      const weekCard = e.target.closest('.week-form');
+      const activityList = weekCard.querySelector('.activity-list');
+      const totalInput = getActivityTotalInput(weekIndex);
+      
+      if (!totalInput) return;
+      
+      const currentTotal = parseInt(totalInput.value, 10);
+      const firstActivity = activityList.querySelector('.activity-form');
+      
+      if (!firstActivity) return;
+      
+      // Clone the first activity form
+      const clone = firstActivity.cloneNode(true);
+      
+      // Clear input values
+      clone.querySelectorAll('input:not([type="hidden"]), textarea, select').forEach(field => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+          field.checked = false;
+        } else {
+          field.value = '';
+        }
+      });
+      
+      // Update form field names/ids for new activity
+      clone.querySelectorAll('input, select, textarea').forEach(field => {
+        if (field.name && field.name.includes('activities-')) {
+          field.name = field.name.replace(
+            new RegExp(`activities-${weekIndex}-\\d+-`),
+            `activities-${weekIndex}-${currentTotal}-`
+          );
+          field.id = field.id.replace(
+            new RegExp(`id_activities-${weekIndex}-\\d+-`),
+            `id_activities-${weekIndex}-${currentTotal}-`
+          );
+        }
+      });
+      
+      // Update labels
+      clone.querySelectorAll('label').forEach(label => {
+        if (label.htmlFor && label.htmlFor.includes('id_activities-')) {
+          label.htmlFor = label.htmlFor.replace(
+            new RegExp(`id_activities-${weekIndex}-\\d+-`),
+            `id_activities-${weekIndex}-${currentTotal}-`
+          );
+        }
+      });
+      
+      // Add remove button if not present
+      if (!clone.querySelector('.remove-activity')) {
+        const cardBody = clone.querySelector('.card-body .d-flex');
+        if (cardBody) {
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn btn-sm btn-outline-danger ms-2 remove-activity';
+          removeBtn.textContent = 'Remove';
+          cardBody.appendChild(removeBtn);
+        }
+      }
+      
+      activityList.appendChild(clone);
+      totalInput.value = currentTotal + 1;
+    }
+  });
+  
+  // Remove activity (delegated)
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-activity')) {
+      const activityForm = e.target.closest('.activity-form');
+      const deleteCheckbox = activityForm.querySelector('input[name$="-DELETE"]');
+      
+      if (deleteCheckbox) {
+        // Mark for deletion if it's an existing activity
+        deleteCheckbox.checked = true;
+        activityForm.style.display = 'none';
+      } else {
+        // Remove from DOM if it's a new activity
+        activityForm.remove();
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

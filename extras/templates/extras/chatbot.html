@@ -1,0 +1,254 @@
+{% extends "myapp/base.html" %}
+{% load static %}
+{% block content %}
+
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="{% static 'css/individual_components/ai_chatbot.css' %}">
+</head>
+
+<div class="chat-wrapper">
+  <div class="chat-header">
+    <div class="ai-avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8V4H8"/>
+        <rect width="16" height="12" x="4" y="8" rx="2"/>
+        <path d="M2 14h2"/>
+        <path d="M20 14h2"/>
+        <path d="M15 13v2"/>
+        <path d="M9 13v2"/>
+      </svg>
+    </div>
+    <div>
+      <h2>AI Assistant</h2>
+      <p>Your helpful educational companion</p>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    {% if not ai_response and not error %}
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <h3>Start a conversation</h3>
+        <p>Ask me anything! I'm here to help with your questions.</p>
+      </div>
+    {% endif %}
+
+    {% if ai_response %}
+      <div class="message user">
+        <div class="message-avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="message-content">
+          {{ request.POST.prompt }}
+        </div>
+      </div>
+
+      <div class="message ai">
+        <div class="message-avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 8V4H8"/>
+            <rect width="16" height="12" x="4" y="8" rx="2"/>
+            <path d="M2 14h2"/>
+            <path d="M20 14h2"/>
+            <path d="M15 13v2"/>
+            <path d="M9 13v2"/>
+          </svg>
+        </div>
+        <div class="message-content" id="aiResponse">
+          {{ ai_response|linebreaks }}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="chat-input-wrapper">
+    <div class="prompt-suggestions">
+      <button type="button" class="prompt-button" onclick="insertPrompt('Explain the key dates of World War 1')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+        </svg>
+        Key dates of WW1 
+      </button>
+      <button type="button" class="prompt-button" onclick="insertPrompt('Give me a challenging logic problem.')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2"/>
+          <path d="M7 7h10"/>
+          <path d="M7 12h10"/>
+          <path d="M7 17h10"/>
+        </svg>
+        Challenging Logic problem
+      </button>
+      <button type="button" class="prompt-button" onclick="insertPrompt('Explain photosynthesis in simple terms')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v8"/>
+          <path d="m4.93 10.93 1.41 1.41"/>
+          <path d="M2 18h2"/>
+          <path d="M20 18h2"/>
+          <path d="m19.07 10.93-1.41 1.41"/>
+          <path d="M22 22H2"/>
+          <path d="m8 6 3-3 3 3"/>
+          <path d="M16 18a4 4 0 0 0-8 0"/>
+        </svg>
+        What is Photosynthesis?
+      </button>
+      
+    </div>
+    <form method="post" class="chat-form" id="chatForm">
+      {% csrf_token %}
+      <div class="input-container">
+        <textarea 
+          name="prompt" 
+          class="chat-textarea" 
+          placeholder="Ask me something..." 
+          id="chatInput"
+          rows="1"
+        ></textarea>
+      </div>
+      <button type="submit" class="send-button" id="sendButton">
+        <svg id="sendIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"/>
+          <path d="M22 2 11 13"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Insert prompt from suggestion button
+  function insertPrompt(text) {
+    const textarea = document.getElementById('chatInput');
+    textarea.value = text;
+    textarea.focus();
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+  }
+
+  // Auto-resize textarea
+  const textarea = document.getElementById('chatInput');
+  textarea.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+  });
+
+  // Handle form submission with loading state
+  const form = document.getElementById('chatForm');
+  const sendButton = document.getElementById('sendButton');
+  const sendIcon = document.getElementById('sendIcon');
+  const chatMessages = document.getElementById('chatMessages');
+
+  form.addEventListener('submit', function(e) {
+    const prompt = textarea.value.trim();
+    if (!prompt) {
+      e.preventDefault();
+      return;
+    }
+
+    // Show loading state
+    sendButton.disabled = true;
+    sendIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>';
+
+    // Add user message immediately
+    const userMessage = document.createElement('div');
+    userMessage.className = 'message user';
+    userMessage.innerHTML = `
+      <div class="message-avatar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="message-content">${escapeHtml(prompt)}</div>
+    `;
+    
+    // Remove empty state if exists
+    const emptyState = chatMessages.querySelector('.empty-state');
+    if (emptyState) {
+      emptyState.remove();
+    }
+
+    chatMessages.appendChild(userMessage);
+
+    // Add loading message
+    const loadingMessage = document.createElement('div');
+    loadingMessage.className = 'loading-message';
+    loadingMessage.innerHTML = `
+      <div class="message-avatar" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8V4H8"/>
+          <rect width="16" height="12" x="4" y="8" rx="2"/>
+          <path d="M2 14h2"/>
+          <path d="M20 14h2"/>
+          <path d="M15 13v2"/>
+          <path d="M9 13v2"/>
+        </svg>
+      </div>
+      <div class="loading-content">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+    `;
+    chatMessages.appendChild(loadingMessage);
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+
+  // Render math notation with KaTeX
+  function renderMath() {
+    const aiResponse = document.getElementById('aiResponse');
+    if (aiResponse) {
+      renderMathInElement(aiResponse, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Scroll to bottom on load
+  window.addEventListener('load', function() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    renderMath();
+  });
+
+  // Auto-focus textarea
+  textarea.focus();
+
+  // Submit on Enter (but Shift+Enter for new line)
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+      form.submit();
+    }
+  });
+</script>
+
+{% endblock %}

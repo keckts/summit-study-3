@@ -1,0 +1,23 @@
+{
+  "name": "summit-study-2-frontend",
+  "version": "1.0.0",
+  "description": "TypeScript frontend for summit-study-2",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.14",
+    "@types/node": "^24.6.0",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "flowbite": "^3.1.2",
+    "lucide-react": "^0.544.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

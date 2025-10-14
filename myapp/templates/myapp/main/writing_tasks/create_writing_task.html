@@ -1,0 +1,18 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+<h2>Create Writing Task</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+{% endblock %}

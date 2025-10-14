@@ -1,0 +1,66 @@
+{% extends "myapp/base.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3">{{ test.title }} - Results</h2>
+
+  <div class="mb-3">
+    <p><strong>Score:</strong> {{ score|floatformat:2 }}%</p>
+    <p><strong>Correct Answers:</strong> {{ correct_answers }} / {{ total_questions }}</p>
+  </div>
+
+  <hr>
+
+  {% for entry in user_answers_list %}
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Question {{ forloop.counter }}:</h5>
+      <p class="card-text">{{ entry.question.text }}</p>
+
+      <p><strong>Your answer:</strong>
+      {% if entry.question.question_type == 'mcq' %}
+          {% for option in entry.question.options.all %}
+              {% if option.id|stringformat:"s" == entry.user_answer %}
+                  {{ option.text }}
+              {% endif %}
+          {% endfor %}
+      {% else %}
+          {{ entry.user_answer }}
+      {% endif %}
+      </p>
+
+      <p><strong>Correct answer:</strong>
+      {% if entry.question.question_type == 'mcq' %}
+          {% for option in entry.question.options.all %}
+              {% if option.is_correct %}
+                  {{ option.text }}
+              {% endif %}
+          {% endfor %}
+      {% else %}
+          {{ entry.question.answer }}
+      {% endif %}
+      </p>
+
+      {% if entry.question.explanation %}
+        <p class="text-muted"><strong>Explanation:</strong> {{ entry.question.explanation }}</p>
+      {% endif %}
+
+      {% if entry.is_correct %}
+        <span class="badge bg-success">Correct</span>
+      {% else %}
+        <span class="badge bg-danger">Incorrect</span>
+      {% endif %}
+
+      {% if entry.typo_warning %}
+        <div class="alert alert-warning mt-2 p-2" role="alert">
+          ⚠ Potential typo detected! You answered "{{ entry.typo_warning.user_answer }}" 
+          but the correct answer is "{{ entry.typo_warning.correct_answer }}".
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <h4 class="mt-4">Points earned: <span class="text-primary">{{ points }}</span></h4>
+</div>
+{% endblock %}

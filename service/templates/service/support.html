@@ -1,0 +1,147 @@
+{% extends "service/base.html" %}
+
+{% block content %}
+<div class="container my-5">
+
+  <!-- Hero Section -->
+  <div class="text-center mb-5">
+    <div class="mb-3">
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle" style="width:60px;height:60px;">
+        <i class="bi bi-question-circle fs-3"></i>
+      </div>
+    </div>
+    <h1 class="fw-bold">How Can We Help?</h1>
+    <p class="text-muted">Find answers to common questions or contact support for more help.</p>
+    <div class="position-relative mt-4 mx-auto" style="max-width:500px;">
+      <input type="text" id="faqSearch" class="form-control form-control-lg ps-5" placeholder="Search for help...">
+      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <div id="faqContainer">
+    {% for category in faq_data %}
+      <div class="card mb-3 faq-category">
+        <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#cat-{{ forloop.counter }}">
+          <span class="fw-semibold">
+            <i class="bi bi-{{ category.icon|lower }}"></i> {{ category.category }}
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="cat-{{ forloop.counter }}" class="collapse">
+          <div class="card-body">
+            {% for qa in category.questions %}
+              <div class="faq-item mb-3">
+                <button class="btn w-100 text-start d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#q-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                  <span class="fw-semibold faq-question">{{ qa.question }}</span>
+                  <i class="bi bi-chevron-down"></i>
+                </button>
+                <div id="q-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="collapse">
+                  <p class="mt-2 faq-answer">{{ qa.answer|safe }}</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Contact Section -->
+  <div class="card mt-5 text-center text-white" style="background: linear-gradient(90deg, #0d6efd, #6f42c1);">
+    <div class="card-body py-5">
+      <h2 class="fw-bold">Still Need Help?</h2>
+      <p class="mb-4">Can't find what you're looking for? Our support team is here to help you succeed.</p>
+      <div class="d-flex flex-wrap gap-3 justify-content-center">
+        <a href="mailto:summitstudygroup@gmail.com" class="btn btn-light">
+          <i class="bi bi-envelope-fill text-danger me-2"></i> Email Support
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61579261383552" target="_blank" class="btn btn-primary">
+          <i class="bi bi-facebook me-2"></i> Facebook
+        </a>
+        <a href="https://reddit.com/r/SummitStudy" target="_blank" class="btn" style="background:#FF4500; color:white;">
+          <i class="bi bi-reddit me-2"></i> Reddit Community
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Styles -->
+<style>
+  .faq-item button {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    transition: background 0.2s;
+  }
+  .faq-item button:hover {
+    background: #e9ecef;
+  }
+  mark {
+    background: #fff3cd;
+    padding: 0;
+  }
+</style>
+
+<!-- Search Script -->
+<script>
+const searchInput = document.getElementById("faqSearch");
+const faqCategories = document.querySelectorAll(".faq-category");
+
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase();
+  let foundAny = false;
+
+  faqCategories.forEach(category => {
+    let categoryVisible = false;
+    category.querySelectorAll(".faq-item").forEach(item => {
+      const question = item.querySelector(".faq-question");
+      const answer = item.querySelector(".faq-answer");
+      const text = (question.textContent + " " + answer.textContent).toLowerCase();
+      const collapseDiv = item.querySelector(".collapse");
+
+      if (text.includes(query)) {
+        // show item via Bootstrap collapse
+        if (!collapseDiv.classList.contains("show")) {
+          const bsCollapse = new bootstrap.Collapse(collapseDiv, {toggle: true});
+        }
+        item.style.display = "block";
+        categoryVisible = true;
+        foundAny = true;
+
+        // Highlight matches
+        [question, answer].forEach(el => {
+          el.innerHTML = el.textContent.replace(new RegExp(`(${query})`, "gi"), "<mark>$1</mark>");
+        });
+      } else {
+        // hide collapse smoothly
+        const bsCollapse = bootstrap.Collapse.getInstance(collapseDiv);
+        if (bsCollapse && collapseDiv.classList.contains("show")) bsCollapse.hide();
+        item.style.display = "none";
+        [question, answer].forEach(el => el.innerHTML = el.textContent);
+      }
+    });
+
+    const catCollapse = category.querySelector(".collapse");
+    category.style.display = categoryVisible ? "block" : "none";
+    // expand category if any match inside
+    if (categoryVisible && !catCollapse.classList.contains("show")) {
+      new bootstrap.Collapse(catCollapse, {toggle: true});
+    } else if (!categoryVisible && catCollapse.classList.contains("show")) {
+      bootstrap.Collapse.getInstance(catCollapse)?.hide();
+    }
+  });
+
+  // handle no results
+  let noResults = document.getElementById("noResults");
+  if (!foundAny && !noResults) {
+    document.getElementById("faqContainer").insertAdjacentHTML("beforeend",
+      '<p id="noResults" class="text-center text-muted mt-4">No results found</p>');
+  } else if (foundAny && noResults) {
+    noResults.remove();
+  }
+});
+</script>
+{% endblock %}

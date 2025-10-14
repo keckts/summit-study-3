@@ -1,0 +1,168 @@
+{% extends "myapp/base_no_sidebar.html" %}
+{% load static %}
+
+{% block content %}
+
+<script>
+    // Pass all server-side data to the external JS
+    const flashcardData = {
+        allFlashcards: {{ flashcards_json|safe }},
+        csrfToken: '{{ csrf_token }}',
+        totalCards: {{ flashcard_set.flashcards.count }},
+        initialCard: {
+            front: `{{ current_card.front|escapejs }}`,
+            back: `{{ current_card.back|escapejs }}`
+        },
+        studyModeInitial: {{ study_mode|yesno:"true,false" }},
+        resetUrl: "{% url 'reset_flashcards_ajax' flashcard_set.id %}",
+        answerUrl: "{% url 'answer_flashcard_ajax' flashcard_set.id %}",
+        exitUrl: "{% url 'flashcard_sets' %}"
+    };
+</script>
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flashcards — {{ flashcard_set.title }}</title>
+    <link rel="stylesheet" href="{% static 'css/individual_components/flashcards.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+    <script src="{% static 'js/flashcards/flashcards.js' %}" defer></script>
+</head>
+<body>
+
+<div class="flashcard-container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="btn-exit" id="exitBtn" title="Exit">
+                <i class="bi bi-box-arrow-left"></i>
+            </button>
+            <h1 class="title">{{ flashcard_set.title }}</h1>
+            <div class="form-check form-switch mode-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="toggleMode" {% if study_mode %}checked{% endif %}>
+                <label class="form-check-label" for="toggleMode">Study Mode</label>
+            </div>
+        </div>
+
+        <!-- Progress & Stats -->
+        <div class="progress-container">
+            <div class="progress-text">
+                <span id="currentIndex">0</span> / <span id="totalCards">{{ flashcard_set.flashcards.count }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="stats" id="statsArea">
+                <div class="stat-item stat-known">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span id="knownCount">0</span>
+                </div>
+                <div class="stat-item stat-not-known">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <span id="notKnownCount">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flip instruction -->
+    <div class="flip-instruction">
+        <i class="bi bi-mouse"></i>
+        Click the card or press <kbd>Space</kbd> to flip it
+    </div>
+
+    <!-- Flashcard -->
+    <div class="flashcard-wrapper">
+        <div class="flashcard" id="flashcard" tabindex="0" aria-live="polite">
+            <div class="flashcard-inner" id="flashcardInner">
+                <div class="flashcard-face flashcard-front">
+                    <div id="frontContent"></div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    <div id="backContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-section">
+        <button class="btn-flashcard btn-flip" id="flipBtn" title="Flip (Space)">
+            <i class="bi bi-arrow-repeat"></i> Flip Card
+        </button>
+
+        <div class="action-buttons" id="study_mode_buttons">
+            <button class="btn-flashcard btn-not-known" id="notKnownBtn" title="Not known (1)">
+                <i class="bi bi-x-lg"></i> Not Known
+            </button>
+            <button class="btn-flashcard btn-known" id="knownBtn" title="Known (2)">
+                <i class="bi bi-check-lg"></i> Known
+            </button>
+        </div>
+
+        <div class="action-buttons" id="regular_mode_buttons">
+            <button class="btn-flashcard btn-grey" id="backBtn" disabled title="Back (←)">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            <button class="btn-flashcard btn-grey" id="proceedBtn" title="Proceed (→)">
+                <i class="bi bi-arrow-right"></i> Proceed
+            </button>
+            <button class="btn-flashcard btn-grey" id="shuffleBtn" title="Shuffle">
+                <i class="fa-solid fa-shuffle"></i> Shuffle
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Help Button -->
+<button class="help-icon" id="helpBtn" title="Keyboard Shortcuts">
+    <i class="bi bi-keyboard"></i>
+</button>
+
+<!-- Keyboard Shortcuts Modal -->
+<div id="shortcutsModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title-section">
+                <i class="bi bi-keyboard modal-icon"></i>
+                <h2 class="modal-title">Keyboard Shortcuts</h2>
+            </div>
+            <button class="close" id="closeModal" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <ul class="shortcut-list">
+            <li><span>Flip card</span><kbd>Space</kbd></li>
+            <li><span>Mark as not known</span><kbd>1</kbd></li>
+            <li><span>Mark as known</span><kbd>2</kbd></li>
+            <li><span>Next (regular)</span><kbd>→</kbd></li>
+            <li><span>Back (regular)</span><kbd>←</kbd></li>
+            <li><span>Show shortcuts</span><kbd>?</kbd></li>
+            <li><span>Close shortcuts</span><kbd>Esc</kbd></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Exit Confirmation Modal -->
+<div id="exitModal" class="modal" aria-hidden="true">
+    <div class="modal-content exit-modal">
+        <div class="modal-header">
+            <div class="modal-title-section">
+                <i class="bi bi-exclamation-triangle modal-icon warning"></i>
+                <h2 class="modal-title">Exit Flashcards?</h2>
+            </div>
+        </div>
+        <p>Your progress will be saved, but you'll need to start this session again.</p>
+        <div class="exit-actions">
+            <button class="btn-modal btn-cancel" id="cancelExit">Stay</button>
+            <button class="btn-modal btn-confirm" id="confirmExit">Exit</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+{% endblock %}

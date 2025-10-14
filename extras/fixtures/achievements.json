@@ -1,0 +1,202 @@
+[
+  {
+    "model": "extras.achievement",
+    "pk": 1,
+    "fields": {
+      "title": "Level 1 Explorer",
+      "description": "Your journey begins here — welcome to Summit Study!",
+      "icon": "fa-shoe-prints",
+      "required_level": 1
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 2,
+    "fields": {
+      "title": "Level 2 Trailblazer",
+      "description": "You have taken your first few steps on the path of knowledge.",
+      "icon": "fa-hiking",
+      "required_level": 2
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 3,
+    "fields": {
+      "title": "Level 3 Pathfinder",
+      "description": "You are making steady progress — keep moving forward!",
+      "icon": "fa-map",
+      "required_level": 3
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 4,
+    "fields": {
+      "title": "Level 5 Knowledge Seeker",
+      "description": "A strong foundation has been built — you're becoming unstoppable.",
+      "icon": "fa-book-open",
+      "required_level": 5
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 5,
+    "fields": {
+      "title": "Level 10 Scholar",
+      "description": "Your dedication is paying off — you're reaching new heights.",
+      "icon": "fa-graduation-cap",
+      "required_level": 10
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 6,
+    "fields": {
+      "title": "Level 15 Brainstormer",
+      "description": "Your ideas are sharp and your persistence shines.",
+      "icon": "fa-lightbulb",
+      "required_level": 15
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 7,
+    "fields": {
+      "title": "Level 20 Innovator",
+      "description": "Your creativity and effort set you apart.",
+      "icon": "fa-flask",
+      "required_level": 20
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 8,
+    "fields": {
+      "title": "Level 25 Deep Thinker",
+      "description": "You are going beyond surface knowledge and into mastery.",
+      "icon": "fa-brain",
+      "required_level": 25
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 9,
+    "fields": {
+      "title": "Level 30 Knowledge Builder",
+      "description": "You are building something extraordinary with every step.",
+      "icon": "fa-layer-group",
+      "required_level": 30
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 10,
+    "fields": {
+      "title": "Level 40 Rising Star",
+      "description": "Your skills shine bright as you reach new milestones.",
+      "icon": "fa-star",
+      "required_level": 40
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 11,
+    "fields": {
+      "title": "Level 50 Halfway Hero",
+      "description": "Halfway to greatness — you have proven your determination.",
+      "icon": "fa-trophy",
+      "required_level": 50
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 12,
+    "fields": {
+      "title": "Level 60 Knowledge Guardian",
+      "description": "You guard the wisdom you have earned and share it with others.",
+      "icon": "fa-shield-alt",
+      "required_level": 60
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 13,
+    "fields": {
+      "title": "Level 70 Wisdom Seeker",
+      "description": "Your path is guided by curiosity and wisdom.",
+      "icon": "fa-search",
+      "required_level": 70
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 14,
+    "fields": {
+      "title": "Level 80 Mastermind",
+      "description": "You are unlocking deeper layers of mastery.",
+      "icon": "fa-chess-queen",
+      "required_level": 80
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 15,
+    "fields": {
+      "title": "Level 90 Visionary",
+      "description": "You see connections others might miss — your vision is clear.",
+      "icon": "fa-eye",
+      "required_level": 90
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 16,
+    "fields": {
+      "title": "Level 100 Knowledge Titan",
+      "description": "A century of levels reached — an unstoppable force of learning.",
+      "icon": "fa-mountain",
+      "required_level": 100
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 17,
+    "fields": {
+      "title": "Level 150 Galaxy Thinker",
+      "description": "Your knowledge extends beyond boundaries — a galactic mind.",
+      "icon": "fa-galactic-republic",
+      "required_level": 150
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 18,
+    "fields": {
+      "title": "Level 200 Galactic Genius",
+      "description": "You have achieved mastery across galaxies of knowledge.",
+      "icon": "fa-rocket",
+      "required_level": 200
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 19,
+    "fields": {
+      "title": "Level 300 Cosmic Sage",
+      "description": "Your wisdom echoes across the universe.",
+      "icon": "fa-moon",
+      "required_level": 300
+    }
+  },
+  {
+    "model": "extras.achievement",
+    "pk": 20,
+    "fields": {
+      "title": "Level 500 Summit Master",
+      "description": "You have conquered the summit of Summit Study itself.",
+      "icon": "fa-crown",
+      "required_level": 500
+    }
+  }
+]

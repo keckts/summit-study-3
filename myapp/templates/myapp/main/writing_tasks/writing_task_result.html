@@ -1,0 +1,58 @@
+{% extends "myapp/base.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <h4>{{ task.title }} - Your Essay</h4>
+
+    <p class="fw-bold">Prompt:</p>
+    <p>{{ task.prompt }}</p>
+
+    <hr>
+
+    <p class="fw-bold">Your Writing:</p>
+    <div class="border p-3" style="white-space: pre-wrap;">{{ content }}</div>
+
+    <hr>
+
+    <p class="fw-bold">AI Score:</p>
+    <p>{{ score }}%</p>
+
+    <p class="fw-bold">Points earned:</p>
+    <p>{{ points }}</p>
+
+    <p class="fw-bold">AI Feedback:</p>
+    <div class="border p-3">{{ feedback }}</div>
+
+    <hr>
+
+    <h5>Ask the AI anything about your essay:</h5>
+    <div id="chat-box">
+        <textarea id="chat-input" class="form-control mb-2" rows="3" placeholder="Ask a question..."></textarea>
+        <button id="send-btn" class="btn btn-success">Send</button>
+        <div id="chat-output" class="mt-2 border p-2" style="height:200px; overflow-y:auto;"></div>
+    </div>
+
+
+</div>
+
+<script>
+document.getElementById("send-btn").addEventListener("click", async () => {
+    const input = document.getElementById("chat-input").value;
+    if(!input) return;
+
+    const output = document.getElementById("chat-output");
+    output.innerHTML += `<div><b>You:</b> ${input}</div>`;
+    document.getElementById("chat-input").value = '';
+
+   const response = await fetch("{% url 'ai_chat' %}", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({message: input, submission_id: '{{ submission.pk }}'})
+    });
+ 
+    const data = await response.json();
+    output.innerHTML += `<div><b>AI:</b> ${data.reply}</div>`;
+    output.scrollTop = output.scrollHeight;
+});
+</script>
+{% endblock %}

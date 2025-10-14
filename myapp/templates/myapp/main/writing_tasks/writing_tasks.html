@@ -1,0 +1,158 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{% static 'css/tests/practice_tests.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<div class="writing-tasks-container">
+  <!-- Header Section -->
+  <div class="page-header purple-gradient">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">Writing Tasks</h1>
+        <p class="page-subtitle">
+          Practice your writing skills with custom tasks designed to challenge you.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a href="{% url 'create_writing_task' %}" class="btn btn-create">
+          <i class="fas fa-plus"></i>
+          Create Task
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-section">
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" placeholder="Search writing tasks..." class="search-input">
+    </div>
+    
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="difficultyFilter" class="filter-label">
+          <i class="fas fa-signal purple-text"></i>
+          Difficulty
+        </label>
+        <select id="difficultyFilter" class="filter-select">
+          <option value="all">All Levels</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="sortFilter" class="filter-label">
+          <i class="fas fa-sort purple-text"></i>
+          Sort By
+        </label>
+        <select id="sortFilter" class="filter-select">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+        </select>
+      </div>
+      
+      <button class="btn-reset-filters" id="resetFilters">
+        <i class="fas fa-rotate-right"></i>
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Writing Task Grid -->
+  <div class="writing-task-grid" id="writingTaskGrid">
+
+    {% for writing_task in tasks %}
+    <div class="writing-task-card"
+         data-title="{{ writing_task.title|lower }}"
+         data-difficulty="{{ writing_task.difficulty|default:'medium'|lower }}"
+         data-date="{{ writing_task.created_at|date:'Y-m-d' }}">
+      
+      <div class="card-header purple-gradient">
+        <div class="card-badge purple-gradient">
+          <i class="fas fa-pen"></i>
+        </div>
+        <div class="card-difficulty {{ writing_task.difficulty|default:'medium'|lower }}">
+          <i class="fas fa-signal"></i>
+          {{ writing_task.difficulty|default:'Medium' }}
+        </div>
+      </div>
+      
+      <div class="card-content">
+        <h2 class="card-title">{{ writing_task.title }}</h2>
+        <p class="card-description">{{ writing_task.description|default:"No description provided." }}</p>
+        
+        <div class="card-meta">
+          {% if writing_task.word_count %}
+          <div class="meta-item">
+            <i class="fas fa-file-lines"></i>
+            <span>{{ writing_task.word_count }} words</span>
+          </div>
+          {% endif %}
+          {% if writing_task.duration %}
+          <div class="meta-item">
+            <i class="fas fa-clock purple-text"></i>
+            <span>{{ writing_task.duration }} min</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="card-footer">
+        <a href="{% url 'take_writing_task' writing_task.id %}" class="btn btn-take-test-writing">
+          <i class="fas fa-play"></i>
+          Start Task
+        </a>
+        <div class="card-actions">
+          <a href="{% url 'edit_writing_task' writing_task.id %}" class="btn-icon" title="Edit">
+            <i class="fas fa-edit"></i>
+          </a>
+          <form action="{% url 'delete_writing_task' writing_task.id %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-icon" title="Delete" onclick="return confirm('Are you sure?')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <h3>No Writing Tasks Yet</h3>
+      <p>Create a writing task to get started and practice your skills.</p>
+      <div class="empty-actions">
+        <a href="{% url 'create_writing_task' %}" class="btn btn-create">
+          <i class="fas fa-plus"></i>
+          Create Task
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- No Results Message -->
+  <div class="no-results" id="noResults" style="display: none;">
+    <div class="empty-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <h3>No Tasks Found</h3>
+    <p>Try adjusting your search or filters</p>
+    <button class="btn-reset-filters" onclick="document.getElementById('resetFilters').click()">
+      <i class="fas fa-rotate-right"></i>
+      Reset Filters
+    </button>
+  </div>
+</div>
+
+<script>
+  // (Keep your same JS here — no changes needed)
+</script>
+{% endblock %}

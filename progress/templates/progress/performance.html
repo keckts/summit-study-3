@@ -1,0 +1,105 @@
+{% extends "myapp/base.html" %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <div class="bg-white shadow-md rounded-xl p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-indigo-500"></i>
+                Performance Over Time
+            </h2>
+            <select id="activity-select" class="border rounded-md px-3 py-1 text-gray-700">
+                <option value="all">All Activities</option>
+                <option value="practice">Practice Tests</option>
+                <option value="writing">Writing Tasks</option>
+            </select>
+        </div>
+        <canvas id="performanceChart" height="100"></canvas>
+    </div>
+</div>
+
+<!-- Safely embed JSON data -->
+{% load static %}
+{{ practice_data|json_script:"practice-data" }}
+{{ writing_data|json_script:"writing-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+
+    // Read safely injected JSON
+    const practiceData = JSON.parse(document.getElementById('practice-data').textContent);
+    const writingData = JSON.parse(document.getElementById('writing-data').textContent);
+
+    function formatResults(results, label) {
+        return results.map(r => ({
+            x: new Date(r.taken_at),
+            y: r.score,
+            label: `${label}: ${r.test_name} (${r.score})`,
+            date: r.taken_at
+        }));
+    }
+
+    const practicePoints = formatResults(practiceData, "Practice Test");
+    const writingPoints = formatResults(writingData, "Writing Task");
+
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'All Activities',
+                    data: [...practicePoints, ...writingPoints],
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointRadius: 5,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
+            },
+            scales: {
+                x: { display: false },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { stepSize: 25, color: '#555' },
+                    grid: { color: 'rgba(200,200,200,0.2)' }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let dataPoint = context.raw;
+                            return `${dataPoint.label} - ${new Date(dataPoint.date).toLocaleDateString()}`;
+                        }
+                    }
+                },
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Dropdown filter
+    document.getElementById("activity-select").addEventListener("change", function() {
+        let value = this.value;
+        if (value === "practice") {
+            chart.data.datasets[0].data = practicePoints;
+            chart.data.datasets[0].label = "Practice Tests";
+        } else if (value === "writing") {
+            chart.data.datasets[0].data = writingPoints;
+            chart.data.datasets[0].label = "Writing Tasks";
+        } else {
+            chart.data.datasets[0].data = [...practicePoints, ...writingPoints];
+            chart.data.datasets[0].label = "All Activities";
+        }
+        chart.update();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{% static 'css/tests/practice_tests.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 🌿 Light Green Theme Overrides */
+    .page-header {
+      background: linear-gradient(135deg, #3ecf8e, #8fe8c2);
+    }
+    .btn-create, .btn-ai, .btn-take-test {
+      background: linear-gradient(135deg, #3ecf8e, #7be4b7);
+    }
+    .btn-create:hover, .btn-ai:hover, .btn-take-test:hover {
+      background: linear-gradient(135deg, #36b97e, #68d8a9);
+    }
+    .card-badge {
+      background: linear-gradient(135deg, #3ecf8e, #8fe8c2);
+    }
+    .empty-icon {
+      background: linear-gradient(135deg, #3ecf8e, #8fe8c2);
+      color: white;
+    }
+    .practice-test-card {
+      border-top: 5px solid #3ecf8e;
+    }
+  </style>
+</head>
+
+<div class="practice-tests-container">
+  <!-- 🌿 Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">Flashcard Sets</h1>
+        <p class="page-subtitle">Study smarter with interactive flashcards—create, review, and test your knowledge.</p>
+      </div>
+      <div class="header-actions">
+        <a href="{% url 'create_flashcard_set' %}" class="btn btn-create">
+          <i class="fas fa-plus"></i>
+          Create Manually
+        </a>
+        <button class="btn btn-ai" id="open-ai-modal">
+          <i class="fas fa-wand-magic-sparkles"></i>
+          Generate with AI
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🌿 Search + Filter -->
+  <div class="search-filter-section">
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" placeholder="Search flashcard sets..." class="search-input">
+    </div>
+    
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="sortFilter" class="filter-label">
+          <i class="fas fa-sort"></i>
+          Sort By
+        </label>
+        <select id="sortFilter" class="filter-select">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+        </select>
+      </div>
+
+      <button class="btn-reset-filters" id="resetFilters">
+        <i class="fas fa-rotate-right"></i>
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- 🌿 Flashcard Grid -->
+  <div class="practice-test-grid" id="flashcardGrid">
+    {% for set in sets %}
+    <div class="practice-test-card" data-title="{{ set.title|lower }}" data-date="{{ set.created_at|date:'Y-m-d' }}">
+      <div class="card-header" style="background: linear-gradient(135deg, #3ecf8e, #8fe8c2);">
+        <div class="card-badge">
+          <i class="fas fa-clone"></i>
+        </div>
+        <div class="card-difficulty medium">
+          <i class="fas fa-layer-group"></i>
+          Flashcards
+        </div>
+      </div>
+
+      <div class="card-content">
+        <h2 class="card-title">{{ set.title }}</h2>
+        <p class="card-description">{{ set.description|default:"No description provided." }}</p>
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="fas fa-calendar"></i>
+            <span>{{ set.created_at|date:"F j, Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <a href="{% url 'take_flashcard_set' set.id %}" class="btn-take-test">
+          <i class="fas fa-book-open"></i>
+          Study
+        </a>
+        <div class="card-actions">
+          <a href="{% url 'edit_flashcard_set' set.id %}" class="btn-icon" title="Edit">
+            <i class="fas fa-edit"></i>
+          </a>
+
+          <form action="{% url 'delete_flashcard_set' set.id %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-icon" title="Delete" onclick="return confirm('Delete this flashcard set?')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-clone"></i>
+      </div>
+      <h3>No Flashcard Sets Yet</h3>
+      <p>Create your first set manually or generate one with AI</p>
+      <div class="empty-actions">
+        <a href="{% url 'create_flashcard_set' %}" class="btn btn-create" style="background: white; color: #3ecf8e;">
+          <i class="fas fa-plus"></i>
+          Create Manually
+        </a>
+        <button class="btn btn-ai" id="open-ai-modal-empty">
+          <i class="fas fa-wand-magic-sparkles"></i>
+          Generate with AI
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 🌿 No Results -->
+  <div class="no-results" id="noResults" style="display:none;">
+    <div class="empty-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <h3>No Sets Found</h3>
+    <p>Try adjusting your search or filters</p>
+    <button class="btn-reset-filters" onclick="document.getElementById('resetFilters').click()">
+      <i class="fas fa-rotate-right"></i>
+      Reset Filters
+    </button>
+  </div>
+</div>
+
+<!-- 🌿 AI Modal (same functionality as tests) -->
+<div id="ai-modal" class="modal">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="modal-close" aria-label="Close modal">
+      <i class="fas fa-times"></i>
+    </button>
+    
+    <div class="modal-header">
+      <div class="modal-icon">
+        <i class="fas fa-wand-magic-sparkles"></i>
+      </div>
+      <h2 class="modal-title">Create Flashcard Set with AI</h2>
+      <p class="modal-subtitle">Generate a full flashcard set automatically from your topic or upload.</p>
+    </div>
+
+    <form id="ai-flashcard-form" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="prompt" class="form-label">
+          <i class="fas fa-lightbulb"></i>
+          Topic or Instructions
+        </label>
+        <textarea name="prompt" id="prompt" rows="4" placeholder="E.g., 'Create flashcards for the human circulatory system'" required></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="amount" class="form-label">
+            <i class="fas fa-hashtag"></i>
+            Number of Flashcards
+          </label>
+          <input type="number" name="amount" id="amount" value="10" min="1" max="100" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="file" class="form-label">
+          <i class="fas fa-file-upload"></i>
+          Optional File Upload
+        </label>
+        <div class="file-upload-wrapper">
+          <input type="file" name="file" id="file" accept=".txt,.csv,.pdf" class="file-input">
+          <label for="file" class="file-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span class="file-text">Choose a file or drag here</span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-submit">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        Generate Flashcards
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("ai-modal");
+  const openBtns = [document.getElementById("open-ai-modal"), document.getElementById("open-ai-modal-empty")].filter(Boolean);
+  const closeBtn = document.querySelector(".modal-close");
+  const overlay = document.querySelector(".modal-overlay");
+  const form = document.getElementById("ai-flashcard-form");
+  const csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  openBtns.forEach(btn => btn.addEventListener("click", () => modal.classList.add("active")));
+  closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+  overlay.addEventListener("click", () => modal.classList.remove("active"));
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = form.querySelector(".btn-submit");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    const data = new FormData(form);
+    const res = await fetch("{% url 'create_ai_activity' 'flashcards' %}", {
+      method: "POST",
+      headers: { "X-CSRFToken": csrf },
+      body: data
+    });
+
+    const json = await res.json();
+    if (json.success) {
+      window.location.href = json.redirect_url;
+    } else {
+      alert(json.error || "Unexpected error");
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Flashcards';
+  });
+});
+</script>
+{% endblock %}

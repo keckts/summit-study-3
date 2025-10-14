@@ -1,0 +1,481 @@
+{% extends "myapp/base_no_sidebar.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<head>
+  <link rel="stylesheet" href="{% static 'css/individual_components/take_practice_test.css' %}"
+</head>
+
+
+
+<div class="test-container">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="sidebar">
+        <!-- Timer -->
+        <div class="timer">
+          <div class="timer-icon">
+            <i class="far fa-clock"></i>
+          </div>
+          <div class="timer-display" id="timer">{{ test.duration }}:00</div>
+          <div class="timer-label">Time remaining</div>
+        </div>
+        
+        <!-- Progress -->
+        <div class="progress-section">
+          <div class="progress-header">
+            <span>Progress</span>
+            <span id="progress-text">0 / {{ questions|length }}</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+          </div>
+          <div class="questions-answered">
+            <span id="answered-count">0</span> questions answered
+          </div>
+        </div>
+        
+        <!-- Question Navigation Grid -->
+        <div class="question-grid-section">
+          <h6>
+            <i class="fas fa-th"></i>
+            Questions
+          </h6>
+          <div class="question-grid" id="question-grid">
+            {% for question in questions %}
+              <button type="button" class="question-nav-btn" data-question-index="{{ forloop.counter0 }}">
+                {{ forloop.counter }}
+              </button>
+            {% endfor %}
+          </div>
+          
+          <!-- Legend -->
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-box current"></div>
+              <span>Current</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box answered"></div>
+              <span>Answered</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box flagged"></div>
+              <span>Flagged</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="main-content">
+        <!-- Header -->
+        <div class="test-header">
+          <div class="test-title">
+            <h2>{{ test.title }}</h2>
+            <div class="test-subtitle">Question <span id="current-q-num">1</span> of {{ questions|length }}</div>
+          </div>
+          <button type="button" class="exit-btn" 
+              onclick="openModal(
+                  'Are you sure you want to exit? Your progress will be lost.', 
+                  [
+                      ['Exit', '/practice-tests/', 'red']
+                  ]
+              )">
+              Exit Test
+          </button>
+ 
+        </div>
+        
+        <!-- Form -->
+        <form method="post" id="test-form">
+          {% csrf_token %}
+          
+          {% for question in questions %}
+            <div class="question-container" data-question-index="{{ forloop.counter0 }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+              <div class="question-header">
+                <h3 class="question-title">{{ question.text }}</h3>
+                <button type="button" class="flag-btn" data-question-index="{{ forloop.counter0 }}">
+                  <i class="far fa-flag"></i>
+                </button>
+              </div>
+              
+              {% if question.question_type|lower == 'mcq' %}
+                <span class="question-type-badge badge-mcq">Multiple Choice</span>
+                <div class="question-text">Double-click to auto-advance</div>
+                <div class="options-container">
+                  {% for option in question.options.all %}
+                    <label class="option-card" data-option-number="{{ forloop.counter }}">
+                      <div class="option-number">({{ forloop.counter }})</div>
+                      <input type="radio" class="option-radio" name="question_{{ question.id }}" value="{{ option.id }}">
+                      <div class="option-text">{{ option.text }}</div>
+                    </label>
+                  {% endfor %}
+                </div>
+              {% elif question.question_type|lower == 'tf' %}
+                <span class="question-type-badge badge-tf">True / False</span>
+                <div class="options-container">
+                  <label class="option-card" data-option-number="1">
+                    <div class="option-number">(1)</div>
+                    <input type="radio" class="option-radio" name="question_{{ question.id }}" value="True">
+                    <div class="option-text">True</div>
+                  </label>
+                  <label class="option-card" data-option-number="2">
+                    <div class="option-number">(2)</div>
+                    <input type="radio" class="option-radio" name="question_{{ question.id }}" value="False">
+                    <div class="option-text">False</div>
+                  </label>
+                </div>
+              {% else %}
+                <span class="question-type-badge badge-text">Short Answer</span>
+                <textarea class="text-answer" name="question_{{ question.id }}" placeholder="Type your answer here..." data-question-index="{{ forloop.counter0 }}"></textarea>
+              {% endif %}
+            </div>
+          {% endfor %}
+          
+          <!-- Navigation Footer -->
+          <div class="navigation-footer">
+            <button type="button" class="nav-btn prev-btn" id="prev-btn">
+              <i class="fas fa-arrow-left"></i>
+              Previous
+            </button>
+            
+            <div class="keyboard-hint">
+              Use arrow keys to navigate • Press <span class="kbd-key">F</span> to flag
+              <br>
+              <button type="button" onclick="showKeyboardModal()">View all shortcuts</button>
+            </div>
+            
+            <button type="button" class="nav-btn next-btn" id="next-btn">
+              Next
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal" id="keyboard-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class="fas fa-keyboard"></i> Keyboard Shortcuts
+      </h3>
+      <button class="modal-close" onclick="hideKeyboardModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="shortcut-list">
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Next question</span>
+        <span class="shortcut-key">→</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Previous question</span>
+        <span class="shortcut-key">←</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Flag/unflag question</span>
+        <span class="shortcut-key">F</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Select option 1</span>
+        <span class="shortcut-key">1</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Select option 2</span>
+        <span class="shortcut-key">2</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Select option 3</span>
+        <span class="shortcut-key">3</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Select option 4</span>
+        <span class="shortcut-key">4</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-desc">Next Question</span>
+        <span class="shortcut-key">Ctrl + Enter</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .question-nav-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;        /* fixed width */
+  height: 40px;       /* fixed height */
+  margin: 2px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.question-nav-btn.current {
+  background-color: #007bff;
+  color: white;
+}
+
+.question-nav-btn.answered {
+  background-color: #28a745;
+  color: white;
+}
+
+.question-nav-btn.flagged {
+  background-color: #ffc107;
+  color: white;
+}
+
+/* Ensure text is always visible */
+.question-nav-btn span {
+  display: inline;
+}
+
+</style>
+
+<script>
+(function() {
+  const totalQuestions = {{ questions|length }};
+  let currentQuestionIndex = 0;
+  let answeredQuestions = new Set();
+  let flaggedQuestions = new Set();
+  let timeRemaining = {{ test.duration }} * 60; // in seconds
+  
+  // Timer
+  function updateTimer() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const timerEl = document.getElementById('timer');
+    timerEl.textContent = display;
+    
+    // Color changes
+    timerEl.classList.remove('warning', 'danger');
+    if (timeRemaining <= 300) timerEl.classList.add('warning');
+    if (timeRemaining <= 60) timerEl.classList.add('danger');
+    
+    if (timeRemaining <= 0) {
+      document.getElementById('test-form').submit();
+    }
+    
+    timeRemaining--;
+  }
+  
+  setInterval(updateTimer, 1000);
+  
+  // Navigation
+  function showQuestion(index) {
+    if (index < 0 || index >= totalQuestions) return;
+    
+    document.querySelectorAll('.question-container').forEach((el, i) => {
+      el.style.display = i === index ? 'block' : 'none';
+    });
+    
+    currentQuestionIndex = index;
+    document.getElementById('current-q-num').textContent = index + 1;
+    
+    // Update navigation buttons
+    document.getElementById('prev-btn').disabled = index === 0;
+
+    const nextBtn = document.getElementById('next-btn');
+
+    if (index === totalQuestions - 1) {
+      nextBtn.textContent = 'Submit';
+      nextBtn.innerHTML = 'Submit <i class="fas fa-check"></i>';
+      nextBtn.onclick = () => document.getElementById('test-form').submit();
+
+    } else {
+      nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+      nextBtn.onclick = () => showQuestion(currentQuestionIndex + 1);
+    }
+    
+    updateQuestionGrid();
+  }
+  
+  function updateQuestionGrid() {
+    document.querySelectorAll('.question-nav-btn').forEach((btn, i) => {
+      btn.classList.remove('current', 'answered', 'flagged');
+      if (i === currentQuestionIndex) btn.classList.add('current');
+      else if (answeredQuestions.has(i)) btn.classList.add('answered');
+      if (flaggedQuestions.has(i)) btn.classList.add('flagged');
+    });
+  }
+  
+  function updateProgress() {
+    const count = answeredQuestions.size;
+    const percentage = (count / totalQuestions) * 100;
+    document.getElementById('progress-bar').style.width = percentage + '%';
+    document.getElementById('progress-text').textContent = `${count} / ${totalQuestions}`;
+    document.getElementById('answered-count').textContent = count;
+  }
+  
+  // Question grid click
+  document.querySelectorAll('.question-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const index = parseInt(btn.dataset.questionIndex);
+      showQuestion(index);
+    });
+  });
+  
+  // Navigation buttons
+  document.getElementById('prev-btn').addEventListener('click', () => {
+    showQuestion(currentQuestionIndex - 1);
+  });
+  
+  document.getElementById('next-btn').addEventListener('click', () => {
+    showQuestion(currentQuestionIndex + 1);
+  });
+  
+  // Flag buttons
+  document.querySelectorAll('.flag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const index = parseInt(btn.dataset.questionIndex);
+      if (flaggedQuestions.has(index)) {
+        flaggedQuestions.delete(index);
+        btn.classList.remove('flagged');
+      } else {
+        flaggedQuestions.add(index);
+        btn.classList.add('flagged');
+      }
+      updateQuestionGrid();
+    });
+  });
+  
+  // Option selection
+  document.querySelectorAll('.option-card').forEach(card => {
+    const radio = card.querySelector('.option-radio');
+    
+    card.addEventListener('click', () => {
+      radio.checked = true;
+      card.closest('.options-container').querySelectorAll('.option-card').forEach(c => {
+        c.classList.remove('selected');
+      });
+      card.classList.add('selected');
+      
+      answeredQuestions.add(currentQuestionIndex);
+      updateProgress();
+      updateQuestionGrid();
+    });
+    
+    // Double-click to advance
+    let clickTimer = null;
+    card.addEventListener('click', () => {
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        setTimeout(() => showQuestion(currentQuestionIndex + 1), 200);
+      } else {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+        }, 300);
+      }
+    });
+  });
+  
+  // Text answer tracking
+  document.querySelectorAll('.text-answer').forEach(textarea => {
+    textarea.addEventListener('input', () => {
+      const index = parseInt(textarea.dataset.questionIndex);
+      if (textarea.value.trim()) {
+        answeredQuestions.add(index);
+      } else {
+        answeredQuestions.delete(index);
+      }
+      updateProgress();
+      updateQuestionGrid();
+    });
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ignore if typing in textarea
+    // Ctrl + Enter should always proceed, even in textarea
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        showQuestion(currentQuestionIndex + 1); // or next question logic
+        return;
+    }
+
+    // Ignore other shortcuts when typing in textarea
+    if (e.target.tagName === 'TEXTAREA') return;
+    
+    switch(e.key) {
+      case 'ArrowRight':
+        e.preventDefault();
+        showQuestion(currentQuestionIndex + 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        showQuestion(currentQuestionIndex - 1);
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        document.querySelector(`.flag-btn[data-question-index="${currentQuestionIndex}"]`).click();
+        break;
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+        e.preventDefault();
+        const optNum = parseInt(e.key);
+        const container = document.querySelector(`.question-container[data-question-index="${currentQuestionIndex}"]`);
+        const option = container.querySelector(`.option-card[data-option-number="${optNum}"]`);
+        if (option) option.click();
+        break;
+    }
+    
+    if (e.ctrlKey && e.key === 'Enter') { // ctrl enter = continue
+      e.preventDefault();
+      showQuestion(totalQuestions + 1);
+    }
+  });
+  
+  // Initialize
+  updateQuestionGrid();
+  updateProgress();
+  
+  // Restore selected options on page load
+  document.querySelectorAll('.option-radio:checked').forEach(radio => {
+    radio.closest('.option-card').classList.add('selected');
+  });
+})();
+
+function showKeyboardModal() {
+  document.getElementById('keyboard-modal').classList.add('show');
+}
+
+function hideKeyboardModal() {
+  document.getElementById('keyboard-modal').classList.remove('show');
+}
+
+function confirmExit() {
+  if (confirm('Are you sure you want to exit? Your progress will be lost.')) {
+    window.location.href = "{% url 'practice_tests' %}";
+  }
+}
+
+// Close modal on outside click
+document.getElementById('keyboard-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'keyboard-modal') {
+    hideKeyboardModal();
+  }
+});
+</script>
+
+{% endblock %}

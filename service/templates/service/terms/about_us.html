@@ -1,0 +1,103 @@
+{% extends 'myapp/base_no_sidebar.html' %}
+
+{% block content %}
+<div class="min-vh-100 bg-gradient-to-br" style="background: linear-gradient(to bottom right, #ebf8ff, #ffffff, #f3e8ff);">
+    <div class="container py-5">
+
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <div class="mb-3">
+                <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/38085f450_Copilot_20250811_151840.png" 
+                     alt="Summit Study Logo" 
+                     class="img-fluid" style="width: 80px; height: 80px;">
+            </div>
+            <h1 class="display-4 fw-bold mb-3" style="background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; color: transparent;">
+                About Summit Study
+            </h1>
+            <p class="lead text-muted mx-auto" style="max-width: 800px;">
+                Empowering students with AI-driven learning tools designed specifically for academic excellence. 
+                From selective school preparation to comprehensive subject mastery, we're here to help you reach your peak potential.
+            </p>
+        </div>
+
+        <!-- Mission Section -->
+        <div class="card mb-5 shadow-sm text-center p-4">
+            <div class="card-header bg-transparent border-0">
+                <h2 class="h3 fw-bold">Our Mission</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mx-auto" style="max-width: 700px;">
+                    At Summit Study, we believe every student deserves access to personalized, high-quality education. 
+                    Our platform combines cutting-edge AI technology with proven educational methodologies to create 
+                    a learning experience that adapts to each student's unique needs and learning style.
+                </p>
+            </div>
+        </div>
+
+        <!-- Founder Quote -->
+        <div class="card mb-5 shadow text-center p-4" style="background: linear-gradient(to right, #ebf8ff, #f3e8ff); border: 1px solid #c7d2fe;">
+            <div class="card-body">
+                <svg class="mb-3" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h4v9zM19 21h-4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h4v9z"/>
+                </svg>
+                <p class="fst-italic text-muted mb-2">
+                    “I used Summit Study to prepare for my math exams — it made studying simple and effective. 
+                    With Summit Study, I felt confident and ended up acing them!”
+                </p>
+                <p class="fw-semibold">– Founder, Summit Study</p>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="text-center mb-5">
+            <h2 class="h3 fw-bold mb-3">Why Choose Summit Study?</h2>
+            <p class="text-muted mx-auto mb-4" style="max-width: 600px;">
+                Our comprehensive platform offers everything you need to excel academically, all powered by advanced AI technology.
+            </p>
+
+            <div class="row g-4">
+                {% for feature in features %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 text-center p-3 shadow-sm hover-shadow" style="transition: transform 0.3s;">
+                        <div class="mb-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; {{ feature.color }}">
+                            <!-- Replace with actual icon SVG -->
+                            <svg width="24" height="24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        </div>
+                        <h5 class="fw-bold mb-2">{{ feature.title }}</h5>
+                        <p class="text-muted">{{ feature.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="card text-center shadow-sm p-5">
+            <h2 class="h3 fw-bold mb-3">Get In Touch</h2>
+            <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">
+                Have questions about Summit Study? We'd love to hear from you. Reach out to us and we'll get back to you as soon as possible.
+            </p>
+
+            <div class="row g-3 justify-content-center">
+                {% for link in contactLinks %}
+                <div class="col-12 col-md-4">
+                    <a href="{{ link.href }}" target="_blank" class="btn w-100 py-3 {{ link.color }} text-white d-flex flex-column align-items-center gap-2">
+                        <!-- Placeholder icon -->
+                        <svg width="20" height="20" fill="currentColor">
+                            <circle cx="10" cy="10" r="10"/>
+                        </svg>
+                        <div>
+                            <div class="fw-semibold">{{ link.name }}</div>
+                            <div class="small opacity-75">{{ link.handle }}</div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

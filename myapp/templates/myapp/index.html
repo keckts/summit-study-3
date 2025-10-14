@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summit Study - AI-Powered Learning Platform</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="{% static 'css/individual_components/index.css' %}">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="logo"><i class="fas fa-mountain"></i> Summit Study</div>
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="{% url 'accounts:login_view' %}" style="color: white;" class="nav-btn nav-btn-primary">Sign In</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge"><i class="fas fa-sparkles"></i> AI-Powered Learning</div>
+        <h1>Master any exam with AI</h1>
+        <p>Get personalized tutoring, practice tests, and instant feedback. Transform your study experience with AI-powered learning.</p>
+        <div class="hero-buttons">
+          <a href="{% url 'accounts:signup_view' %}" class="btn btn-primary"><i class="fas fa-zap"></i> Get Started Free</a>
+          <a href="#features" class="btn btn-secondary"><i class="fas fa-play-circle"></i> Watch Demo</a>
+        </div>
+      </div>
+      <canvas id="three-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="section-header">
+      <span class="section-badge">Features</span>
+      <h2>Everything You Need to Excel</h2>
+      <p>Comprehensive tools and resources to make studying more efficient and effective</p>
+    </div>
+    <div class="features-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-robot"></i></div><h3>AI Chatbot</h3><p>Get instant answers to your questions with our intelligent AI tutor available 24/7.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-clipboard-check"></i></div><h3>Practice Tests</h3><p>AI-generated practice tests tailored to your learning needs for effective exam prep.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-layer-group"></i></div><h3>Smart Flashcards</h3><p>Adaptive flashcards that adjust to your learning pace and retention patterns.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-pen-fancy"></i></div><h3>Writing Tasks</h3><p>Improve writing skills with AI-powered feedback on grammar, structure, and content.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-chart-line"></i></div><h3>Progress Reports</h3><p>Track your learning journey with detailed analytics and insights into performance.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-trophy"></i></div><h3>Achievements</h3><p>Stay motivated with badges, streaks, and rewards for learning milestones.</p></div>
+    </div>
+  </section>
+
+  <!-- Video Section -->
+  <section class="video-section">
+    <div class="section-header">
+      <span class="section-badge">See It In Action</span>
+      <h2>Watch How Summit Study Works</h2>
+      <p>Discover how our platform can transform your study experience</p>
+    </div>
+    <div class="video-container">
+      <div class="video-placeholder">
+        <div class="play-button"><i class="fas fa-play"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews Section -->
+  <section class="reviews">
+    <div class="section-header">
+      <span class="section-badge">Testimonials</span>
+      <h2>What Students Say About Us</h2>
+      <p>Real feedback from students who've reached their academic summit</p>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card"><div class="review-header"><div class="review-avatar">SK</div><div class="review-info"><h4>Sarah K.</h4><div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div><p class="review-text">"Summit Study transformed my exam preparation! The AI-generated practice tests helped me improve significantly."</p></div>
+      <div class="review-card"><div class="review-header"><div class="review-avatar">MR</div><div class="review-info"><h4>Michael R.</h4><div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div><p class="review-text">"The gamification features keep me motivated. Earning achievements makes studying enjoyable!"</p></div>
+      <div class="review-card"><div class="review-header"><div class="review-avatar">EL</div><div class="review-info"><h4>Emma L.</h4><div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div><p class="review-text">"The AI chatbot is like having a personal tutor 24/7. It explains concepts clearly and patiently."</p></div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+   {{ subscription_features|safe }}
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3><i class="fas fa-mountain"></i> Summit Study</h3>
+          <p>Empowering students worldwide to reach their academic potential through innovative AI-powered learning tools and personalized study experiences.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="{% url 'service:about_us' %}">About</a></li>
+            <li><a href="FIX IN PRODUCTION">Contact</a></li>
+            <li><a href="{% url 'service:view_blogs' %}">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="{% url 'service:privacy_policy' %}">Privacy Policy</a></li>
+            <li><a href="{% url 'service:terms_and_conditions' %}">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Summit Study. All rights reserved. Built with ❤️ for students everywhere.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
+  <!-- 3D Animation Script -->
+
+  <script>
+const canvas = document.getElementById('three-canvas');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+
+// Icosahedron wireframe
+const geometry = new THREE.IcosahedronGeometry(3, 1);
+const material = new THREE.MeshBasicMaterial({
+  color: 0x69a8f5,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.9
+});
+const icosahedron = new THREE.Mesh(geometry, material);
+scene.add(icosahedron);
+
+// Wireframe overlay with rainbow gradient
+const edges = new THREE.EdgesGeometry(geometry);
+const lineMaterial = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 2 });
+const wireframe = new THREE.LineSegments(edges, lineMaterial);
+scene.add(wireframe);
+
+// Assign rainbow colors to edges
+const colors = [];
+const edgePositions = edges.attributes.position.array;
+for (let i = 0; i < edgePositions.length; i += 3) {
+    const hue = (i / edgePositions.length) * 360;
+    const color = new THREE.Color(`hsl(${hue}, 100%, 60%)`);
+    colors.push(color.r, color.g, color.b);
+}
+edges.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+// Particle system (blue)
+const particles = new THREE.BufferGeometry();
+const particleCount = 300;
+const positions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+    positions[i*3] = (Math.random() - 0.5) * 15;
+    positions[i*3+1] = (Math.random() - 0.5) * 15;
+    positions[i*3+2] = (Math.random() - 0.5) * 15;
+}
+particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particleMaterial = new THREE.PointsMaterial({
+    color: 0x3399ff,
+    size: 0.07,
+    transparent: true,
+    opacity: 0.6
+});
+const particleSystem = new THREE.Points(particles, particleMaterial);
+scene.add(particleSystem);
+
+// Ambient lighting
+const ambientLight = new THREE.AmbientLight(0x69a8f5, 0.3);
+scene.add(ambientLight);
+
+// Camera position
+camera.position.z = 10;
+
+// Mouse interaction
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+// Animation
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotate main shape with mouse influence
+    icosahedron.rotation.x += 0.005 + mouseY * 0.03;
+    icosahedron.rotation.y += 0.007 + mouseX * 0.03;
+    wireframe.rotation.x = icosahedron.rotation.x;
+    wireframe.rotation.y = icosahedron.rotation.y;
+
+    // Floating animation
+    icosahedron.position.y = Math.sin(Date.now() * 0.001) * 0.5;
+    wireframe.position.y = icosahedron.position.y;
+
+    // Particle rotation
+    particleSystem.rotation.y += 0.001;
+    particleSystem.rotation.x += 0.0005;
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Responsive canvas
+window.addEventListener('resize', () => {
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+});
+
+const annualBtn = document.getElementById('annual-btn');
+const monthlyBtn = document.getElementById('monthly-btn');
+
+const premiumPrice = document.getElementById('premium-price');
+const premiumPeriod = document.getElementById('premium-period');
+const proPrice = document.getElementById('pro-price');
+const proPeriod = document.getElementById('pro-period');
+
+function setAnnual() {
+  annualBtn.classList.add('active');
+  monthlyBtn.classList.remove('active');
+
+  premiumPrice.innerHTML = '$115.2<span>/yr</span>';
+  premiumPeriod.innerText = 'Equivalent to $9.6/month (Save 20%)';
+
+  proPrice.innerHTML = '$240<span>/yr</span>';
+  proPeriod.innerText = 'Equivalent to $20/month (Save 20%)';
+}
+
+function setMonthly() {
+  monthlyBtn.classList.add('active');
+  annualBtn.classList.remove('active');
+
+  premiumPrice.innerHTML = '$12<span>/month</span>';
+  premiumPeriod.innerText = 'Billed monthly';
+
+  proPrice.innerHTML = '$25<span>/month</span>';
+  proPeriod.innerText = 'Billed monthly';
+}
+
+// Add event listeners
+annualBtn.addEventListener('click', setAnnual);
+monthlyBtn.addEventListener('click', setMonthly);
+
+// Default to annual
+setAnnual();
+
+</script>
+
+   
+</body>
+</html>

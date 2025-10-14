@@ -1,0 +1,1 @@
+{"version":3,"file":"ai_widgets.d.ts","sourceRoot":"","sources":["ai_widgets.ts"],"names":[],"mappings":"AACA,qBAAa,oBAAoB;IAC/B,OAAO,CAAC,KAAK,CAAc;IAC3B,OAAO,CAAC,UAAU,CAAc;IAChC,OAAO,CAAC,IAAI,CAAkB;gBAElB,OAAO,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM,EAAE,MAAM,EAAE,MAAM;IAQ7D,OAAO,CAAC,cAAc;IAiCtB,OAAO,CAAC,OAAO;CAIhB"}

@@ -1,0 +1,25 @@
+{% extends 'myapp/base.html' %}
+
+{% block content %}
+
+{% for week in program.weeks.all %}
+  <h2>Week {{ week.week_number }}: {{ week.title }}</h2>
+  <p>Notes: {{ week.notes }}</p>
+  <p>Tips: {{ week.tips }}</p>
+  <ul>
+  {% for activity in week.activities.all %}
+    <li>{{ activity.get_activity_type_display }}: 
+        {% if activity.activity_type == 'practice' %} {{ activity.practice_test.title }} {% endif %}
+        {% if activity.activity_type == 'writing' %} {{ activity.writing_task.title }} {% endif %}
+        {% if activity.activity_type == 'flashcard' %} {{ activity.flashcard_set.title }} {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+
+
+
+{% endfor %}
+
+  <a href="{% url 'extras:create_program' %}" class="btn btn-primary">Create Program</a>
+
+{% endblock %}

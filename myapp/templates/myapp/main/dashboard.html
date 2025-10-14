@@ -1,0 +1,469 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.welcome-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  color: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-greeting {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-icon.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+.stat-icon.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+.stat-icon.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
+.stat-icon.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0.5rem 0 0 0;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.chart-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+#activityChart {
+  width: 100%;
+  height: 300px;
+}
+
+.recent-activity {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.activity-item:hover {
+  background: #f9fafb;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.activity-time {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.12);
+}
+
+.action-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.action-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+}
+
+.action-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.action-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.action-link {
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-link:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+  transform: translateX(4px);
+}
+
+.action-link svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.5;
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .welcome-section {
+    padding: 2rem 1.5rem;
+  }
+  
+  .welcome-greeting {
+    font-size: 1.75rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<div class="dashboard-container">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1 class="welcome-greeting">Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
+      <p class="welcome-subtitle">Ready to continue your learning journey? Let's make today count.</p>
+    </div>
+  </div>
+
+  <a onclick="openModal('Are you sure you want to logout?', [['Logout', '{% url 'accounts:logout' %}', 'danger']])">Logout</a>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon blue">📝</div>
+        <div class="stat-info"><h3>Practice Tests</h3></div>
+      </div>
+      <p class="stat-value">{{ progress_data.total_practice|default:0 }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon green">✍️</div>
+        <div class="stat-info"><h3>Writing Tasks</h3></div>
+      </div>
+      <p class="stat-value">{{ progress_data.total_writing|default:0 }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon purple">🎴</div>
+        <div class="stat-info"><h3>Flashcard Sets</h3></div>
+      </div>
+      <p class="stat-value">{{ progress_data.total_flashcards|default:0 }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon orange">🏆</div>
+        <div class="stat-info"><h3>Total Points</h3></div>
+      </div>
+      <p class="stat-value">{{ user.points|default:0 }}</p>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+    <!-- Activity Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h2 class="chart-title">Weekly Activity</h2>
+          <p class="chart-subtitle">Your learning progress over the past 7 days</p>
+        </div>
+      </div>
+      <div class="chart-container" style="position: relative; height: 300px; width: 100%; max-width: 600px; margin: 0 auto;">
+        <canvas id="activityChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+      <h2 class="chart-title" style="margin-bottom: 1rem;">Recent Activity</h2>
+      {% for activity in progress_data.recent_activity %}
+        <div class="activity-item">
+          <div class="activity-icon" 
+               style="background: {% if activity.type == 'Practice Test' %}#dbeafe; color: #3b82f6;{% elif activity.type == 'Writing Task' %}#d1fae5; color: #10b981;{% elif activity.type == 'Flashcards' %}#e9d5ff; color: #8b5cf6;{% else %}#fed7aa; color: #f59e0b;{% endif %}">
+            {% if activity.type == 'Practice Test' %}📝{% elif activity.type == 'Writing Task' %}✍️{% elif activity.type == 'Flashcards' %}🎴{% else %}🏆{% endif %}
+          </div>
+          <div class="activity-content">
+            <p class="activity-title">{{ activity.name }}</p>
+            <p class="activity-time">{{ activity.date|timesince }} ago</p>
+          </div>
+        </div>
+      {% empty %}
+        <p>No recent activity yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Quick Actions (same as before) -->
+  <div class="quick-actions">
+    <!-- Practice Tests -->
+    <div class="action-card">
+      <div class="action-header">
+        <div class="action-icon blue">📝</div>
+        <h3 class="action-title">Practice Tests</h3>
+      </div>
+      <div class="action-links">
+        <a href="{% url 'practice_tests' %}" class="action-link">View All Tests</a>
+        <a href="{% url 'create_practice_test' %}" class="action-link">Create New Test</a>
+      </div>
+    </div>
+
+    <!-- Writing Tasks -->
+    <div class="action-card">
+      <div class="action-header">
+        <div class="action-icon green">✍️</div>
+        <h3 class="action-title">Writing Tasks</h3>
+      </div>
+      <div class="action-links">
+        <a href="{% url 'writing_tasks' %}" class="action-link">View All Tasks</a>
+        <a href="{% url 'create_writing_task' %}" class="action-link">Create New Task</a>
+      </div>
+    </div>
+
+    <!-- Flashcards -->
+    <div class="action-card">
+      <div class="action-header">
+        <div class="action-icon purple">🎴</div>
+        <h3 class="action-title">Flashcards</h3>
+      </div>
+      <div class="action-links">
+        <a href="{% url 'flashcard_sets' %}" class="action-link">View All Sets</a>
+        <a href="{% url 'create_flashcard_set' %}" class="action-link">Create New Set</a>
+      </div>
+    </div>
+
+    <!-- Progress & More -->
+    <div class="action-card">
+      <div class="action-header">
+        <div class="action-icon orange">📊</div>
+        <h3 class="action-title">More Features</h3>
+      </div>
+      <div class="action-links">
+        <a href="{% url 'progress:progress_page' %}" class="action-link">Progress Reports</a>
+        <a href="{% url 'extras:achievements' %}" class="action-link">Achievements</a>
+        <a href="{% url 'extras:programs' %}" class="action-link">View Programs</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="application/json" id="weekly-progress-data">
+    {{ weekly_progress|json_script:"weekly_progress_data" }}
+</script>
+
+<script>
+  const weeklyData = JSON.parse(document.getElementById('weekly_progress_data').textContent) || [];
+  const weeklyLabels = weeklyData.map(x => x.date);
+  const weeklyCounts = weeklyData.map(x => x.count);
+
+  const ctx = document.getElementById('activityChart').getContext('2d');
+
+  if (weeklyData.length === 0) {
+      ctx.font = '16px Arial';
+      ctx.fillStyle = '#6b7280';
+      ctx.textAlign = 'center';
+      ctx.fillText('No activity data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+  }
+  new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: weeklyLabels,
+          datasets: [{
+              label: 'Activities',
+              data: weeklyCounts,
+              backgroundColor: '#3b82f6'
+          }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+{% endblock %}

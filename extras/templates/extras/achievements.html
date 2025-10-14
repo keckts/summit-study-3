@@ -1,0 +1,331 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+<div class="achievements-wrapper">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-5">
+          <h1 class="display-5 fw-bold mb-2">Your Achievements</h1>
+          <p class="text-muted">Track your progress and unlock new milestones</p>
+        </div>
+
+        <!-- Level Card -->
+        <div class="level-card mb-5">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="mb-1">Level {{ level }}</h3>
+              <p class="text-muted mb-0">{{ points }} points earned</p>
+            </div>
+            <div class="level-badge">
+              <span class="display-6">🏆</span>
+            </div>
+          </div>
+          
+          <div class="progress-wrapper">
+            <div class="progress">
+              <div class="progress-bar" role="progressbar"
+                   style="width: {{ progress }}%"
+                   aria-valuenow="{{ progress }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <small class="text-muted">Progress to next level</small>
+              <small class="fw-semibold">{{ progress|floatformat:0 }}%</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements Grid -->
+        <div class="achievements-grid">
+          {% for achievement in achievements %}
+            <div class="achievement-item {% if not achievement.unlocked %}achievement-locked{% endif %}">
+              <div class="achievement-icon-wrapper">
+                <i class="fas {{ achievement.icon }} achievement-icon"></i>
+                {% if achievement.unlocked %}
+                  <div class="unlocked-indicator">
+                    <i class="fas fa-check"></i>
+                  </div>
+                {% else %}
+                  <div class="locked-indicator">
+                    <i class="fas fa-lock"></i>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div class="achievement-content">
+                <h5 class="achievement-title">{{ achievement.title }}</h5>
+                <p class="achievement-description">{{ achievement.description }}</p>
+                <div class="achievement-footer">
+                  <span class="achievement-level-badge {% if achievement.unlocked %}unlocked{% endif %}">
+                    Level {{ achievement.required_level }}
+                  </span>
+                  {% if achievement.unlocked %}
+                    <span class="achievement-status unlocked">Unlocked</span>
+                  {% else %}
+                    <span class="achievement-status locked">Locked</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12 text-center py-5">
+              <div class="empty-state">
+                <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No achievements available yet.</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Base Styling */
+.achievements-wrapper {
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Level Card */
+.level-card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.level-badge {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Progress Bar */
+.progress-wrapper {
+  margin-top: 1.5rem;
+}
+
+.progress {
+  height: 12px;
+  background-color: #f1f3f5;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+/* Achievements Grid */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Achievement Item */
+.achievement-item {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  border-color: #d0d0d0;
+}
+
+.achievement-item.achievement-locked {
+  background: #fafafa;
+  border-color: #f0f0f0;
+}
+
+.achievement-item.achievement-locked:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Achievement Icon */
+.achievement-icon-wrapper {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+}
+
+.achievement-locked .achievement-icon-wrapper {
+  background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  color: #4CAF50;
+  transition: all 0.3s ease;
+}
+
+.achievement-locked .achievement-icon {
+  color: #b0b0b0;
+}
+
+/* Unlocked/Locked Indicators */
+.unlocked-indicator,
+.locked-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  border: 2px solid #ffffff;
+}
+
+.unlocked-indicator {
+  background: #4CAF50;
+  color: #ffffff;
+}
+
+.locked-indicator {
+  background: #9e9e9e;
+  color: #ffffff;
+}
+
+/* Achievement Content */
+.achievement-content {
+  text-align: center;
+}
+
+.achievement-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-locked .achievement-title {
+  color: #6c757d;
+}
+
+.achievement-description {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.achievement-locked .achievement-description {
+  color: #adb5bd;
+}
+
+/* Achievement Footer */
+.achievement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.achievement-level-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.achievement-level-badge.unlocked {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.achievement-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.achievement-status.unlocked {
+  background: #4CAF50;
+  color: #ffffff;
+}
+
+.achievement-status.locked {
+  background: #f1f3f5;
+  color: #868e96;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 3rem 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .achievements-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .level-card {
+    padding: 1.5rem;
+  }
+  
+  .level-badge {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Animation for unlocked achievements */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.achievement-item:not(.achievement-locked) .achievement-icon-wrapper:hover {
+  animation: pulse 0.5s ease;
+}
+</style>
+{% endblock %}

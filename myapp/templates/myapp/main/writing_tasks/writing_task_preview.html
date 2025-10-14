@@ -1,0 +1,56 @@
+{% extends "myapp/base.html" %}
+
+{% block content %}
+
+<!-- Task Preview Modal -->
+<div class="modal fade" id="taskPreviewModal" tabindex="-1" aria-labelledby="taskPreviewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg rounded-4 border-0">
+      <div class="modal-header border-0 bg-gradient text-white" style="background: linear-gradient(90deg, #6d28d9, #9333ea);">
+        <h5 class="modal-title fw-bold" id="taskPreviewLabel">Writing Task Preview ✨</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Dynamic content -->
+        <h4 id="taskTitle" class="fw-bold text-dark mb-3"></h4>
+        <p id="taskPrompt" class="text-muted mb-4"></p>
+
+        <div class="d-flex gap-4 flex-wrap">
+          <span class="badge rounded-pill bg-light text-dark shadow-sm">
+            <i class="fas fa-clock me-1"></i> <span id="taskTime"></span> min
+          </span>
+          <span class="badge rounded-pill bg-light text-dark shadow-sm">
+            <i class="fas fa-file-word me-1"></i> <span id="taskWords"></span> words
+          </span>
+          <span class="badge rounded-pill bg-purple text-white shadow-sm">
+            <i class="fas fa-tag me-1"></i> <span id="taskDifficulty"></span>
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <a id="startTaskBtn" href="#" class="btn btn-gradient px-4 py-2 rounded-pill">
+          <i class="fas fa-play me-2"></i> Start Task
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTaskPreview(taskId, title, prompt, time, words, difficulty, url) {
+    // Fill modal with task data
+    document.getElementById("taskTitle").innerText = title;
+    document.getElementById("taskPrompt").innerText = prompt;
+    document.getElementById("taskTime").innerText = time || 30;
+    document.getElementById("taskWords").innerText = words || 1000;
+    document.getElementById("taskDifficulty").innerText = difficulty || "General";
+    document.getElementById("startTaskBtn").href = url;
+
+    // Show modal
+    let modal = new bootstrap.Modal(document.getElementById('taskPreviewModal'));
+    modal.show();
+  }
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+  <h2 class="mb-4">Quiz Complete: {{ flashcard_set.title }}</h2>
+
+  <p><strong>Total Flashcards:</strong> {{ summary.total }}</p>
+  <p><strong>Known:</strong> {{ summary.known }}</p>
+  <p><strong>Not Known:</strong> {{ summary.not_known }}</p>
+
+  <div class="progress-bar bg-success" role="progressbar"
+     style="width: {{ summary.known_percent }}%"
+     aria-valuenow="{{ summary.known }}" aria-valuemin="0" aria-valuemax="{{ summary.total }}">
+  {{ summary.known }} Known
+  </div>
+
+  <div class="progress-bar bg-danger" role="progressbar"
+      style="width: {{ summary.not_known_percent }}%"
+      aria-valuenow="{{ summary.not_known }}" aria-valuemin="0" aria-valuemax="{{ summary.total }}">
+    {{ summary.not_known }} Not Known
+  </div>
+ 
+
+  <!-- Chart.js Pie Chart -->
+  <canvas id="resultsChart" width="400" height="200"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Known', 'Not Known'],
+        datasets: [{
+          data: [{{ summary.known }}, {{ summary.not_known }}],
+          backgroundColor: ['#28a745', '#dc3545']
+        }]
+      },
+    });
+  </script>
+
+  <div class="mt-4">
+    <a href="{% url 'take_flashcard_set' flashcard_set.id %}" class="btn btn-primary">Retry Quiz</a>
+    <a href="{% url 'flashcard_sets' %}" class="btn btn-secondary">Back to Sets</a>
+  </div>
+</div>
+
+{% endblock %}

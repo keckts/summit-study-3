@@ -1,0 +1,135 @@
+/* Reset some defaults */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5 {
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Paragraphs */
+p {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+/* Links */
+a {
+  color: #0077cc;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+button, .btn {
+  background: #0077cc;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+button:hover, .btn:hover {
+  background: #005fa3;
+}
+
+/* Layout container */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Card component */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+table th {
+  background-color: #f2f2f2;
+}
+
+body {
+  background: #f0f4f8;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.form-control:focus {
+  border-color: #0077cc;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.btn-outline-danger {
+  border-color: #db4437;
+  color: #db4437;
+}
+
+.btn-outline-primary {
+  border-color: #1877f2;
+  color: #1877f2;
+}
+
+.option-item {
+  transition: background-color 0.3s ease;
+}
+.option-item.correct {
+  background-color: #d4edda; /* Light green */
+}
+.question-form {
+  font-size: 0.9rem;   /* a bit smaller overall */
+}
+.question-form h5 {
+  font-size: 1rem;
+}
+.question-form textarea,
+.question-form input,
+.question-form select {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-in.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+

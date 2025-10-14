@@ -1,0 +1,711 @@
+{% extends 'myapp/base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="text-center mb-4">
+        <h2 class="fw-bold d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-pencil-square text-primary"></i> 
+          {% if editing %}Edit{% else %}Create{% endif %} Practice Test
+        </h2>
+        <p class="text-muted">Build a comprehensive test with multiple question types</p>
+      </div>
+
+      {% if form.errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Please fix the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            {% for field, errlist in form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errlist|join:", " }}</li>
+            {% endfor %}
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% if formset.non_field_errors %}<div class="alert alert-danger">{{ formset.non_field_errors }}</div>{% endif %}
+
+      <form method="post" class="bg-white rounded-3 shadow-sm" novalidate>
+        {% csrf_token %}
+
+        <!-- Test Details Section -->
+<div class="p-4 border-bottom bg-light rounded-top">
+  <h4 class="mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-info-circle text-primary"></i> Test Details
+  </h4>
+  <div class="row g-3">
+    {% for field in form %}
+      {% if field.name != "is_public" %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ field.label }}</label>
+          {% if field.field.widget.input_type == "textarea" %}
+            {% render_field field class="form-control" rows="3" %}
+          {% else %}
+            {% render_field field class="form-control" %}
+          {% endif %}
+          {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Custom Public Checkbox -->
+    <div class="col-md-6">
+      <div class="form-check public-checkbox-container mb-3">
+        <div class="d-flex align-items-center gap-2 bg-light p-2 rounded">
+          <i class="fas fa-globe text-primary"></i>
+          {% render_field form.is_public class="form-check-input mt-0" %}
+          <label class="form-check-label mb-0">Make this test public</label>
+        </div>
+        {% if form.is_public.errors %}
+          <div class="text-danger small mt-1">{{ form.is_public.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+        <!-- Questions Section -->
+        <div class="p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-list-ol text-primary"></i> Questions
+            </h4>
+          </div>
+
+          {{ formset.management_form }}
+          <div id="question-formset">
+            {% if editing and questions %}
+              {# Load existing questions when editing #}
+              {% for question in questions %}
+                <div class="card border shadow-sm mb-3 question-form" data-question-index="{{ forloop.counter0 }}">
+                  <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="mb-0 question-header fw-semibold">
+                        <i class="bi bi-question-circle text-info me-1"></i> Question {{ forloop.counter }}
+                      </h5>
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-question" title="Remove question">
+                        <i class="bi bi-trash"></i> Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    <!-- Question Text -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Question Text</label>
+                      <textarea name="questions-{{ forloop.counter0 }}-text" class="form-control" rows="3" placeholder="Enter your question here...">{{ question.text }}</textarea>
+                    </div>
+
+                    <!-- Question Type -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Question Type</label>
+                      <select name="questions-{{ forloop.counter0 }}-question_type" class="form-select question-type">
+                        <option value="text" {% if question.question_type == "text" %}selected{% endif %}>Short answer</option>
+                        <option value="mcq" {% if question.question_type == "mcq" %}selected{% endif %}>Multiple choice</option>
+                        <option value="tf" {% if question.question_type == "tf" %}selected{% endif %}>True / False</option>
+                      </select>
+                    </div>
+
+                    <!-- Short Answer Section -->
+                    <div class="mb-3 answer-section" {% if question.question_type in "mcq,tf" %}style="display:none;"{% endif %}>
+                      <label class="form-label fw-semibold">Answer</label>
+                      <input type="text" name="questions-{{ forloop.counter0 }}-answer" class="form-control" placeholder="Enter the correct answer..." value="{{ question.answer|default:'' }}">
+                    </div>
+
+                    <!-- Multiple Choice Options Section -->
+                    <div class="options-section" {% if question.question_type not in "mcq,tf" %}style="display:none;"{% endif %}>
+                      <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                        <i class="bi bi-list-check"></i> Answer Options
+                      </label>
+                      <div class="border rounded p-3 bg-light">
+                        <input type="hidden" name="options-{{ forloop.counter0 }}-TOTAL_FORMS" value="{{ question.options.count }}">
+                        <input type="hidden" name="options-{{ forloop.counter0 }}-INITIAL_FORMS" value="{{ question.options.count }}">
+                        <input type="hidden" name="options-{{ forloop.counter0 }}-MIN_NUM_FORMS" value="0">
+                        <input type="hidden" name="options-{{ forloop.counter0 }}-MAX_NUM_FORMS" value="1000">
+                        <div class="option-list">
+                          {% for option in question.options.all %}
+                            <div class="option-form mb-2" data-option-index="{{ forloop.counter0 }}">
+                              <div class="d-flex align-items-center gap-2 {% if option.is_correct %}option-correct{% endif %}">
+                                <span class="badge bg-secondary option-badge">{{ forloop.counter }}</span>
+                                <input type="text" name="options-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}-text" 
+                                       class="form-control flex-grow-1 option-text-input" 
+                                       placeholder="Enter option text..." 
+                                       value="{{ option.text }}"
+                                       {% if question.question_type == "tf" %}readonly{% endif %}>
+                                <div class="form-check">
+                                  <input type="checkbox" name="options-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}-is_correct" 
+                                         class="form-check-input option-correct-check" 
+                                         {% if option.is_correct %}checked{% endif %}>
+                                  <label class="form-check-label small text-nowrap">Correct</label>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-option-btn" 
+                                        title="Remove option" 
+                                        {% if question.question_type == "tf" %}style="display:none;"{% endif %}>
+                                  <i class="bi bi-x-lg"></i>
+                                </button>
+                              </div>
+                              <input type="hidden" name="options-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}-id" value="{{ option.id }}">
+                            </div>
+                          {% endfor %}
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-primary add-option mt-2" 
+                                {% if question.question_type == "tf" %}style="display:none;"{% endif %}>
+                          <i class="bi bi-plus-circle me-1"></i> Add Option
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Explanation -->
+                    <div class="mb-2">
+                      <label class="form-label fw-semibold">Explanation (Optional)</label>
+                      <textarea name="questions-{{ forloop.counter0 }}-explanation" class="form-control" rows="2" placeholder="Explain the correct answer (optional)...">{{ question.explanation|default:'' }}</textarea>
+                    </div>
+
+                    <input type="hidden" name="questions-{{ forloop.counter0 }}-id" value="{{ question.id }}">
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              {# Render formset for new test creation #}
+              {% for qform in formset %}
+                <div class="card border shadow-sm mb-3 question-form" data-question-index="{{ forloop.counter0 }}">
+                  <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="mb-0 question-header fw-semibold">
+                        <i class="bi bi-question-circle text-info me-1"></i> Question {{ forloop.counter }}
+                      </h5>
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-question" title="Remove question">
+                        <i class="bi bi-trash"></i> Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    <!-- Question Text -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">{{ qform.text.label }}</label>
+                      {% render_field qform.text class="form-control" rows="3" placeholder="Enter your question here..." %}
+                      {% if qform.text.errors %}<div class="text-danger small mt-1">{{ qform.text.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- Question Type -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">{{ qform.question_type.label }}</label>
+                      {% render_field qform.question_type class="form-select question-type" %}
+                      {% if qform.question_type.errors %}<div class="text-danger small mt-1">{{ qform.question_type.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- Short Answer Section -->
+                    <div class="mb-3 answer-section">
+                      <label class="form-label fw-semibold">{{ qform.answer.label }}</label>
+                      {% render_field qform.answer class="form-control" placeholder="Enter the correct answer..." %}
+                      {% if qform.answer.errors %}<div class="text-danger small mt-1">{{ qform.answer.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- Multiple Choice Options Section -->
+                    <div class="options-section" style="display:none;">
+                      <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                        <i class="bi bi-list-check"></i> Answer Options
+                      </label>
+                      <div class="border rounded p-3 bg-light">
+                        {% if qform.option_formset %}
+                          {{ qform.option_formset.management_form }}
+                          <div class="option-list">
+                            {% for optform in qform.option_formset %}
+                              <div class="option-form mb-2" data-option-index="{{ forloop.counter0 }}">
+                                <div class="d-flex align-items-center gap-2">
+                                  <span class="badge bg-secondary option-badge">{{ forloop.counter }}</span>
+                                  {% render_field optform.text class="form-control flex-grow-1 option-text-input" placeholder="Enter option text..." %}
+                                  <div class="form-check">
+                                    {% render_field optform.is_correct class="form-check-input option-correct-check" %}
+                                    <label class="form-check-label small text-nowrap">Correct</label>
+                                  </div>
+                                  <button type="button" class="btn btn-sm btn-outline-danger remove-option-btn" title="Remove option">
+                                    <i class="bi bi-x-lg"></i>
+                                  </button>
+                                </div>
+
+                                {% if optform.DELETE %}
+                                  <div style="display:none;">
+                                    {% render_field optform.DELETE class="form-check-input option-delete" %}
+                                  </div>
+                                {% endif %}
+                                {% if optform.id %}
+                                  {% render_field optform.id %}
+                                {% endif %}
+                              </div>
+                            {% endfor %}
+                          </div>
+
+                          <button type="button" class="btn btn-sm btn-outline-primary add-option mt-2">
+                            <i class="bi bi-plus-circle me-1"></i> Add Option
+                          </button>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Explanation -->
+                    <div class="mb-2">
+                      <label class="form-label fw-semibold">{{ qform.explanation.label }}</label>
+                      {% render_field qform.explanation class="form-control" rows="2" placeholder="Explain the correct answer (optional)..." %}
+                      {% if qform.explanation.errors %}<div class="text-danger small mt-1">{{ qform.explanation.errors }}</div>{% endif %}
+                    </div>
+
+                    {% if qform.DELETE %}
+                      <div style="display:none;">{% render_field qform.DELETE class="form-check-input question-delete" %}</div>
+                    {% endif %}
+                    {% if qform.id %}
+                      {% render_field qform.id %}
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <button type="button" id="add-question" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> Add Question
+          </button>
+
+          {% if not formset and not questions %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-question-circle display-4 mb-3"></i>
+              <p>No questions yet. Click "Add Question" to get started!</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <div class="p-4 border-top bg-light rounded-bottom">
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="bi bi-check-circle me-2"></i> {% if editing %}Update{% else %}Create{% endif %} Practice Test
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# Prototype for new questions #}
+  <div id="question-prototype" style="display:none;">
+    <div class="card border shadow-sm mb-3 question-form" data-question-index="__prefix__">
+      <div class="card-header bg-white border-bottom py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 question-header fw-semibold">
+            <i class="bi bi-question-circle text-info me-1"></i> Question __num__
+          </h5>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-question" title="Remove question">
+            <i class="bi bi-trash"></i> Remove
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Question Text</label>
+          <textarea name="questions-__prefix__-text" class="form-control" rows="3" placeholder="Enter your question here..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Question Type</label>
+          <select name="questions-__prefix__-question_type" class="form-select question-type">
+            <option value="text">Short answer</option>
+            <option value="mcq">Multiple choice</option>
+            <option value="tf">True / False</option>
+          </select>
+        </div>
+
+        <div class="mb-3 answer-section">
+          <label class="form-label fw-semibold">Answer</label>
+          <input type="text" name="questions-__prefix__-answer" class="form-control" placeholder="Enter the correct answer...">
+        </div>
+
+        <div class="options-section" style="display:none;">
+          <label class="form-label fw-semibold d-flex align-items-center gap-2">
+            <i class="bi bi-list-check"></i> Answer Options
+          </label>
+          <div class="border rounded p-3 bg-light">
+            <input type="hidden" name="options-__prefix__-TOTAL_FORMS" value="0">
+            <input type="hidden" name="options-__prefix__-INITIAL_FORMS" value="0">
+            <input type="hidden" name="options-__prefix__-MIN_NUM_FORMS" value="0">
+            <input type="hidden" name="options-__prefix__-MAX_NUM_FORMS" value="1000">
+            <div class="option-list"></div>
+
+            <button type="button" class="btn btn-sm btn-outline-primary add-option mt-2">
+              <i class="bi bi-plus-circle me-1"></i> Add Option
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Explanation (Optional)</label>
+          <textarea name="questions-__prefix__-explanation" class="form-control" rows="2" placeholder="Explain the correct answer (optional)..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const qContainer = document.getElementById('question-formset');
+  const addBtn = document.getElementById('add-question');
+  const prototypeHtml = document.getElementById('question-prototype').innerHTML;
+  const isEditing = {{ editing|yesno:"true,false" }};
+
+  function getQuestionsTotalInput() {
+    return document.querySelector('input[name="questions-TOTAL_FORMS"]');
+  }
+
+  function createOptionHtml(qIndex, optIndex, text = '', isCorrect = false) {
+    return `
+      <div class="option-form mb-2" data-option-index="${optIndex}">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-secondary option-badge">${optIndex + 1}</span>
+          <input type="text" name="options-${qIndex}-${optIndex}-text" class="form-control flex-grow-1 option-text-input" placeholder="Enter option text..." value="${text}">
+          <div class="form-check">
+            <input type="checkbox" name="options-${qIndex}-${optIndex}-is_correct" class="form-check-input option-correct-check" ${isCorrect ? 'checked' : ''}>
+            <label class="form-check-label small text-nowrap">Correct</label>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-option-btn" title="Remove option">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function addOptionToQuestion(card) {
+    const qIndex = parseInt(card.getAttribute('data-question-index'), 10);
+    const optionList = card.querySelector('.option-list');
+    const totalInput = card.querySelector(`[name="options-${qIndex}-TOTAL_FORMS"]`);
+    
+    if (!optionList || !totalInput) return;
+
+    const currentOptCount = parseInt(totalInput.value, 10);
+    const newOptionHtml = createOptionHtml(qIndex, currentOptCount);
+    
+    optionList.insertAdjacentHTML('beforeend', newOptionHtml);
+    totalInput.value = currentOptCount + 1;
+    
+    updateOptionHighlights(card);
+  }
+
+  function initializeTrueFalseOptions(card) {
+    const qIndex = parseInt(card.getAttribute('data-question-index'), 10);
+    const optionList = card.querySelector('.option-list');
+    const totalInput = card.querySelector(`[name="options-${qIndex}-TOTAL_FORMS"]`);
+    
+    if (!optionList || !totalInput) return;
+    
+    // Clear existing options
+    optionList.innerHTML = '';
+    
+    // Add True and False options
+    optionList.insertAdjacentHTML('beforeend', createOptionHtml(qIndex, 0, 'True', false));
+    optionList.insertAdjacentHTML('beforeend', createOptionHtml(qIndex, 1, 'False', false));
+    totalInput.value = 2;
+    
+    // Make text inputs readonly for True/False
+    optionList.querySelectorAll('.option-text-input').forEach(input => {
+      input.readOnly = true;
+      input.classList.add('bg-light');
+    });
+    
+    // Hide remove buttons for True/False
+    optionList.querySelectorAll('.remove-option-btn').forEach(btn => {
+      btn.style.display = 'none';
+    });
+    
+    updateOptionHighlights(card);
+  }
+
+  function updateOptionHighlights(card) {
+    const optionForms = card.querySelectorAll('.option-form');
+    optionForms.forEach(optForm => {
+      const checkbox = optForm.querySelector('.option-correct-check');
+      const wrapper = optForm.querySelector('.d-flex');
+      
+      if (checkbox && wrapper) {
+        if (checkbox.checked) {
+          wrapper.classList.add('option-correct');
+        } else {
+          wrapper.classList.remove('option-correct');
+        }
+      }
+    });
+  }
+
+  function updateQuestionHeadersAndDataset() {
+    const cards = qContainer.querySelectorAll('.question-form');
+    cards.forEach((card, idx) => {
+      const header = card.querySelector('.question-header');
+      if (header) header.innerHTML = `<i class="bi bi-question-circle text-info me-1"></i> Question ${idx + 1}`;
+      card.setAttribute('data-question-index', idx);
+
+      // Update management inputs
+      const optionTotal = card.querySelector('[name^="options-"][name$="-TOTAL_FORMS"]');
+      if (optionTotal) {
+        optionTotal.name = `options-${idx}-TOTAL_FORMS`;
+        if (optionTotal.id) optionTotal.id = `id_options-${idx}-TOTAL_FORMS`;
+      }
+      const optionMin = card.querySelector('[name^="options-"][name$="-MIN_NUM_FORMS"]');
+      if (optionMin) {
+        optionMin.name = `options-${idx}-MIN_NUM_FORMS`;
+        if (optionMin.id) optionMin.id = `id_options-${idx}-MIN_NUM_FORMS`;
+      }
+      const optionMax = card.querySelector('[name^="options-"][name$="-MAX_NUM_FORMS"]');
+      if (optionMax) {
+        optionMax.name = `options-${idx}-MAX_NUM_FORMS`;
+        if (optionMax.id) optionMax.id = `id_options-${idx}-MAX_NUM_FORMS`;
+      }
+      const optionInitial = card.querySelector('[name^="options-"][name$="-INITIAL_FORMS"]');
+      if (optionInitial) {
+        optionInitial.name = `options-${idx}-INITIAL_FORMS`;
+        if (optionInitial.id) optionInitial.id = `id_options-${idx}-INITIAL_FORMS`;
+      }
+
+      // Update all input/select/textarea names
+      card.querySelectorAll('[name]').forEach(el => {
+        el.name = el.name.replace(/questions-\d+-/, `questions-${idx}-`);
+        if (el.id) el.id = el.id.replace(/id_questions-\d+-/, `id_questions-${idx}-`);
+        el.name = el.name.replace(/options-\d+-/g, `options-${idx}-`);
+        if (el.id) el.id = el.id.replace(/id_options-\d+-/g, `id_options-${idx}-`);
+      });
+
+      // Renumber option rows and update badges
+      const optionList = card.querySelector('.option-list');
+      if (optionList) {
+        const optionRows = optionList.querySelectorAll('.option-form');
+        optionRows.forEach((optEl, optIdx) => {
+          optEl.setAttribute('data-option-index', optIdx);
+          
+          // Update badge numbers
+          const badge = optEl.querySelector('.option-badge');
+          if (badge) badge.textContent = optIdx + 1;
+
+          optEl.querySelectorAll('[name]').forEach(inp => {
+            inp.name = inp.name.replace(new RegExp(`options-${idx}-\\d+-`), `options-${idx}-${optIdx}-`);
+            if (inp.id) inp.id = inp.id.replace(new RegExp(`id_options-${idx}-\\d+-`), `id_options-${idx}-${optIdx}-`);
+          });
+        });
+
+        const totalInput = card.querySelector(`[name="options-${idx}-TOTAL_FORMS"]`);
+        if (totalInput) totalInput.value = optionRows.length;
+      }
+      
+      updateOptionHighlights(card);
+    });
+  }
+
+  function incrementQuestionsTotal(by = 1) {
+    const t = getQuestionsTotalInput();
+    t.value = parseInt(t.value, 10) + by;
+  }
+
+  function decrementQuestionsTotal(by = 1) {
+    const t = getQuestionsTotalInput();
+    t.value = Math.max(0, parseInt(t.value, 10) - by);
+  }
+
+  // Add new question
+  addBtn.addEventListener('click', function () {
+    const totalInput = getQuestionsTotalInput();
+    const current = parseInt(totalInput.value, 10);
+    let html = prototypeHtml.replace(/__prefix__/g, current);
+    html = html.replace(/__num__/g, current + 1);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    const newCard = wrapper.firstElementChild;
+    qContainer.appendChild(newCard);
+
+    updateQuestionHeadersAndDataset();
+
+    const qType = newCard.querySelector('.question-type');
+    if (qType) {
+      qType.value = 'text'; // Default to Short Answer
+      qType.dispatchEvent(new Event('change'));
+    }
+
+    incrementQuestionsTotal(1);
+    newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  // Delegated event handlers
+  document.addEventListener('click', function (e) {
+    // Remove question
+    const remQ = e.target.closest('.remove-question');
+    if (remQ) {
+      const card = remQ.closest('.question-form');
+      if (!card) return;
+
+      const deleteInput = card.querySelector('input[name$="-DELETE"]');
+      if (deleteInput) {
+        deleteInput.checked = true;
+        card.style.display = 'none';
+      } else {
+        card.remove();
+        decrementQuestionsTotal(1);
+        updateQuestionHeadersAndDataset();
+      }
+      return;
+    }
+
+    // Add option
+    const addOptBtn = e.target.closest('.add-option');
+    if (addOptBtn) {
+      const card = addOptBtn.closest('.question-form');
+      addOptionToQuestion(card);
+      return;
+    }
+
+    // Remove option
+    const removeOptBtn = e.target.closest('.remove-option-btn');
+    if (removeOptBtn) {
+      const optionRow = removeOptBtn.closest('.option-form');
+      const card = removeOptBtn.closest('.question-form');
+      const qIndex = parseInt(card.getAttribute('data-question-index'), 10);
+      const deleteInput = optionRow.querySelector('input[name$="-DELETE"]');
+
+      if (deleteInput) {
+        deleteInput.checked = true;
+        optionRow.style.display = 'none';
+      } else {
+        optionRow.remove();
+        updateQuestionHeadersAndDataset();
+      }
+      return;
+    }
+  });
+
+  // Toggle options vs answer when question type changes
+  document.addEventListener('change', function (e) {
+    if (e.target.classList && e.target.classList.contains('question-type')) {
+      const card = e.target.closest('.question-form');
+      if (!card) return;
+      
+      const val = e.target.value;
+      const optionsSection = card.querySelector('.options-section');
+      const answerSection = card.querySelector('.answer-section');
+      const answerInput = answerSection ? answerSection.querySelector('input, textarea') : null;
+      const addOptionBtn = card.querySelector('.add-option');
+
+      if (val === 'mcq') {
+        // Multiple Choice
+        if (optionsSection) optionsSection.style.display = 'block';
+        if (answerSection) answerSection.style.display = 'none';
+        if (answerInput) answerInput.value = '';
+        if (addOptionBtn) addOptionBtn.style.display = 'inline-block';
+        
+        // Initialize with 4 options if empty
+        const optionList = card.querySelector('.option-list');
+        if (optionList && optionList.children.length === 0) {
+          for (let i = 0; i < 4; i++) {
+            addOptionToQuestion(card);
+          }
+        }
+        
+        // Enable editing and show remove buttons
+        const textInputs = card.querySelectorAll('.option-text-input');
+        textInputs.forEach(input => {
+          input.readOnly = false;
+          input.classList.remove('bg-light');
+        });
+        card.querySelectorAll('.remove-option-btn').forEach(btn => {
+          btn.style.display = 'inline-block';
+        });
+        
+      } else if (val === 'tf') {
+        // True/False
+        if (optionsSection) optionsSection.style.display = 'block';
+        if (answerSection) answerSection.style.display = 'none';
+        if (answerInput) answerInput.value = '';
+        if (addOptionBtn) addOptionBtn.style.display = 'none';
+        
+        initializeTrueFalseOptions(card);
+        
+      } else {
+        // Short Answer
+        if (optionsSection) optionsSection.style.display = 'none';
+        if (answerSection) answerSection.style.display = 'block';
+      }
+      
+      return;
+    }
+    
+    // Handle option checkbox changes for highlighting
+    if (e.target.classList && e.target.classList.contains('option-correct-check')) {
+      const card = e.target.closest('.question-form');
+      if (card) {
+        updateOptionHighlights(card);
+      }
+    }
+  });
+
+  // Initialize on page load
+  function init() {
+    updateQuestionHeadersAndDataset();
+    qContainer.querySelectorAll('.question-form').forEach(card => {
+      const qt = card.querySelector('.question-type');
+      if (qt) {
+        if (!qt.value) qt.value = 'text';
+        qt.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  init();
+})();
+</script>
+
+<style>
+.question-form {
+  transition: all 0.3s ease;
+}
+
+.question-form:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.option-form {
+  transition: all 0.3s ease;
+}
+
+.option-form .d-flex {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.option-form .d-flex:hover {
+  background-color: #f8f9fa;
+}
+
+.option-form .d-flex.option-correct {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.option-badge {
+  min-width: 32px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.option-correct-check:checked {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.option-text-input.bg-light {
+  background-color: #e9ecef !important;
+}
+</style>
+{% endblock %}

@@ -1,54 +1,353 @@
 {% extends 'myapp/base.html' %}
-
 {% load static %}
 
 {% block content %}
+<script src="https://js.stripe.com/v3/"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/accounts/subscriptions.css' %}">
 
-  <head>
-    <script src="{% static 'js/subscriptions/stripe.js' %}"></script>
-  </head>
-  
-<h2>Choose a Plan</h2>
+<div class="subscriptions-wrapper">
 
-<div class="row">
-    {% for plan in plans %}
-    <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">{{ plan.name }}</h5>
-                <p class="card-text">${{ plan.price }}/month</p>
-                <form action="{% url 'create_checkout_session' plan.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">Subscribe</button>
-                </form>
-            </div>
+    <!-- Header -->
+    <div class="subscription-header">
+        <h1>Choose Your <span class="highlight">Learning Journey</span></h1>
+        <p class="subtitle">Unlock your full potential with AI-powered study tools designed to help you succeed.</p>
+        <p class="sub-subtitle">Start free and upgrade anytime as your needs grow.</p>
+    </div>
+
+    <!-- Trial Banner (hide if user already had trial) -->
+    {% if not had_trial %}
+    <div class="trial-banner">
+        <i class="fas fa-bolt icon"></i>
+        <strong>14-Day Free Trial Available!</strong>
+        <p>Free trials are available on all Premium and Pro plans.</p>
+    </div>
+    {% endif %}
+
+    <!-- Current Subscription Alert -->
+    {% if current_subscription %}
+    <div class="current-plan-banner">
+        <strong>Current Plan:</strong> {{ current_subscription.plan.name }} 
+        (Active until {{ current_subscription.end_date|date:"F j, Y" }})
+    </div>
+    {% endif %}
+
+    <!-- Error Container -->
+    <div id="error-container"></div>
+
+    <!-- Billing Toggle -->
+    <div class="billing-toggle">
+        <div class="toggle-container">
+            <button id="monthly-toggle" class="toggle-btn" onclick="switchPlan('monthly')">Monthly</button>
+            <button id="annual-toggle" class="toggle-btn active" onclick="switchPlan('annual')">
+                Annual <span class="save-badge">Save 20%</span>
+            </button>
+            <div class="toggle-slider" id="toggle-slider"></div>
         </div>
     </div>
-    {% endfor %}
+
+    <!-- Plans Grid -->
+    <div class="plans-grid" id="plans-container">
+
+        {% for plan in monthly_plans %}
+        <div class="plan-card monthly {% if plan.name == 'Free' %}free{% elif plan.name == 'Pro' %}pro{% endif %} {% if plan.is_featured %}featured{% endif %}" style="display:none;">
+
+            {% if plan.is_featured %}
+            <div class="popular-badge"><i class="fas fa-star icon"></i> Most Popular</div>
+            {% endif %}
+
+            {% if plan.name != 'Free' and not current_subscription %}
+                {% if not had_trial %}
+                    <div class="trial-badge">14-Day Free Trial</div>
+                {% endif %}
+            {% endif %}
+
+            <div class="plan-icon">
+                {% if plan.name == 'Free' %}<i class="fas fa-book"></i>
+                {% elif plan.name == 'Premium' %}<i class="fas fa-star"></i>
+                {% elif plan.name == 'Pro' %}<i class="fas fa-crown"></i>
+                {% endif %}
+            </div>
+
+            <div class="plan-header">
+                <h2 class="plan-name">{{ plan.name }}</h2>
+                <p class="plan-tagline">{{ plan.description|default:"Perfect for getting started and exploring core features." }}</p>
+            </div>
+
+            <div class="plan-pricing">
+                <div class="price-main">${{ plan.get_monthly_price }}</div>
+                <div class="price-period">/month</div>
+            </div>
+
+            <div class="features-section">
+                <ul class="plan-features">
+                    {% for feature in plan.features_list %}
+                        <li><i class="fas fa-check icon"></i> {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                {% if plan.non_features_list %}
+                <ul class="plan-non-features">
+                    {% for nf in plan.non_features_list %}
+                        <li><i class="fas fa-times icon"></i> {{ nf }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="plan-actions">
+                {% if current_subscription and current_subscription.plan.id == plan.id %}
+                    <button class="subscribe-btn current" disabled><i class="fas fa-check"></i> Current Plan</button>
+                    <button class="cancel-btn" onclick="cancelSubscription()">Cancel Subscription</button>
+
+                {% elif plan.name == 'Free' %}
+                    <!-- downgrade button -->
+                    <button class="subscribe-btn downgrade" style="background-color:#fff; color:#333; border:1px solid #ccc;" onclick="goToCustomerPortal()">Downgrade to Free</button>
+
+                {% else %}
+                    <!-- paid plan -->
+                    {% if not had_trial %}
+                        <button class="subscribe-btn" data-plan-id="{{ plan.id }}" onclick="checkout({{ plan.id }}, this)">Start free trial</button>
+                    {% else %}
+                        <button class="subscribe-btn" data-plan-id="{{ plan.id }}" onclick="checkout({{ plan.id }}, this)">Subscribe</button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Repeat for yearly plans similarly -->
+        {% for plan in yearly_plans %}
+        <div class="plan-card annual {% if plan.name == 'Free' %}free{% elif plan.name == 'Pro' %}pro{% endif %} {% if plan.is_featured %}featured{% endif %}">
+            {% if plan.is_featured %}
+            <div class="popular-badge"><i class="fas fa-star icon"></i> Most Popular</div>
+            {% endif %}
+
+            {% if plan.name != 'Free' and not current_subscription %}
+                {% if not had_trial %}
+                    <div class="trial-badge">14-Day Free Trial</div>
+                {% endif %}
+            {% endif %}
+
+            <div class="plan-icon">
+                {% if plan.name == 'Free' %}<i class="fas fa-book"></i>
+                {% elif plan.name == 'Premium' %}<i class="fas fa-star"></i>
+                {% elif plan.name == 'Pro' %}<i class="fas fa-crown"></i>
+                {% endif %}
+            </div>
+
+            <div class="plan-header">
+                <h2 class="plan-name">{{ plan.name }}</h2>
+                <p class="plan-tagline">{{ plan.description }}</p>
+            </div>
+
+            <div class="plan-pricing">
+                <div class="price-main">${{ plan.get_monthly_price }}</div>
+                <div class="price-period">/month</div>
+                <div class="price-annual" style="margin-top: 4px;">Billed annually (${{ plan.price|floatformat:2 }}/year)</div>
+            </div>
+
+            <div class="features-section">
+                <ul class="plan-features">
+                    {% for feature in plan.features_list %}
+                        <li><i class="fas fa-check icon"></i> {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                {% if plan.non_features_list %}
+                <ul class="plan-non-features">
+                    {% for nf in plan.non_features_list %}
+                        <li><i class="fas fa-times icon"></i> {{ nf }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="plan-actions">
+                {% if current_subscription and current_subscription.plan.id == plan.id %}
+                    <button class="subscribe-btn current" disabled><i class="fas fa-check"></i> Current Plan</button>
+                    <button class="cancel-btn" onclick="cancelSubscription()">Cancel Subscription</button>
+
+                {% elif plan.name == 'Free' %}
+                    <button class="subscribe-btn downgrade" style="background-color:#fff; color:#333; border:1px solid #ccc;" onclick="goToCustomerPortal()">Downgrade to Free</button>
+
+                {% else %}
+                    {% if not had_trial %}
+                        <button class="subscribe-btn" data-plan-id="{{ plan.id }}" onclick="checkout({{ plan.id }}, this)">Start free trial</button>
+                    {% else %}
+                        <button class="subscribe-btn" data-plan-id="{{ plan.id }}" onclick="checkout({{ plan.id }}, this)">Subscribe</button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Customer Portal -->
+    <div class="customer-portal-wrapper" style="text-align:center; margin-top:30px;">
+        <p style="margin-bottom: 12px; font-size: 15px; color: #555;">
+            Manage your subscription, billing, and payment methods securely in one place.
+        </p>
+        <a href="{% url 'accounts:customer_portal' %}" 
+           class="portal-btn" 
+           style="
+               display: inline-block;
+               background-color: #6366F1;
+               color: white;
+               font-weight: 600;
+               padding: 14px 28px;
+               border-radius: 10px;
+               text-decoration: none;
+               transition: all 0.3s ease;
+               box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+           "
+           onmouseover="this.style.backgroundColor='#4F46E5'; this.style.transform='scale(1.05)';"
+           onmouseout="this.style.backgroundColor='#6366F1'; this.style.transform='scale(1)';"
+        >
+            Go to Customer Portal
+        </a>
+    </div>
+
 </div>
 
-<!-- template -->
-<button id="checkout-btn" data-plan-id="{{ plan.id }}">Subscribe</button>
-<script src="https://js.stripe.com/v3/"></script>
+
 <script>
-  const stripe = Stripe("{{ STRIPE_PUBLISHABLE_KEY }}"); // pass from Django context
-  document.getElementById("checkout-btn").addEventListener("click", async (e) => {
-    const planId = e.target.dataset.planId;
-    const res = await fetch(`/billing/create-checkout-session/${planId}/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-        "Content-Type": "application/json"
-      },
-    });
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-    const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-    if (result.error) {
-      alert(result.error.message);
+function switchPlan(type) {
+    const monthlyBtn = document.getElementById('monthly-toggle');
+    const annualBtn = document.getElementById('annual-toggle');
+    const slider = document.getElementById('toggle-slider');
+    
+    monthlyBtn.classList.remove('active');
+    annualBtn.classList.remove('active');
+
+    if(type === 'monthly') {
+        monthlyBtn.classList.add('active');
+        slider.style.left = '8px';
+        slider.style.width = monthlyBtn.offsetWidth + 'px';
+        document.querySelectorAll('.plan-card.monthly').forEach(el => el.style.display = 'flex');
+        document.querySelectorAll('.plan-card.annual').forEach(el => el.style.display = 'none');
+    } else {
+        annualBtn.classList.add('active');
+        slider.style.left = monthlyBtn.offsetWidth + 8 + 'px';
+        slider.style.width = annualBtn.offsetWidth + 'px';
+        document.querySelectorAll('.plan-card.monthly').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.plan-card.annual').forEach(el => el.style.display = 'flex');
     }
-  });
+}
+
+// Initialize slider position for Annual (default)
+window.addEventListener('DOMContentLoaded', () => {
+    const monthlyBtn = document.getElementById('monthly-toggle');
+    const annualBtn = document.getElementById('annual-toggle');
+    const slider = document.getElementById('toggle-slider');
+    slider.style.left = monthlyBtn.offsetWidth + 8 + 'px';
+    slider.style.width = annualBtn.offsetWidth + 'px';
+});
+
+const stripe = Stripe('{{ stripe_public_key }}');
+
+async function checkout(planId, button) {
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    button.classList.add('loading');
+
+    try {
+        const response = await fetch(`{% url 'accounts:create_checkout_session' 0 %}`.replace('0', planId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            showError(data.error);
+            button.disabled = false;
+            button.textContent = originalText;
+            button.classList.remove('loading');
+            return;
+        }
+
+        const result = await stripe.redirectToCheckout({
+            sessionId: data.sessionId
+        });
+
+        if (result.error) {
+            showError(result.error.message);
+            button.disabled = false;
+            button.textContent = originalText;
+            button.classList.remove('loading');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('An error occurred. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+        button.classList.remove('loading');
+    }
+}
+
+async function cancelSubscription() {
+    if (!confirm('Are you sure you want to cancel your subscription? It will remain active until the end of your billing period.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('{% url "accounts:cancel_subscription" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            showError(data.error);
+        } else {
+            alert(data.message);
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('An error occurred. Please try again.');
+    }
+}
+
+function showError(message) {
+    const errorContainer = document.getElementById('error-container');
+    errorContainer.innerHTML = `<div class="error-alert">${message}</div>`;
+    
+    setTimeout(() => {
+        errorContainer.innerHTML = '';
+    }, 5000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function goToCustomerPortal() {
+    window.location.href = "{% url 'accounts:customer_portal' %}";
+}
+
+function continueAsFree() {
+    window.location.href = "{% url 'dashboard' %}?plan=free";
+}
+
+
 </script>
-
 {% endblock %}
-

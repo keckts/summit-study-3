@@ -202,8 +202,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
+SITE_URL = "https://symmetrical-space-engine-vxj7gvrpxjrcpv95-8000.app.github.dev" # CHANGE IN PRODUCTION
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_KEY = os.getenv("STRIPE_WEBHOOK_KEY")
+STRIPE_TEST_PORTAL_LINK = os.getenv("STRIPE_TEST_PORTAL_LINK")
 
 COMPRESS_ROOT = BASE_DIR / 'static'
 
@@ -219,7 +222,7 @@ import os
 import dj_database_url
 
 DEBUG = True  # Turn off in production IMPORTANT
-ALLOWED_HOSTS = ['your-app-name.onrender.com', 'summitstudy.app', 'staging.summitstudy.app']
+ALLOWED_HOSTS = ['your-app-name.onrender.com', 'summitstudy.app', 'staging.summitstudy.app', 'localhost', 'localhost:8000', '127.0.0.1']
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

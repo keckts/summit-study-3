@@ -1,4 +1,5 @@
 # accounts/views.py
+import traceback
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, update_session_auth_hash, get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
@@ -186,138 +187,247 @@ def verify_email(request, uidb64, token):
 # Subscription Management
 # ------------------------------
 
-def subscriptions(request):
-    return render(request, "accounts/subscriptions/subscriptions.html", {"plans": SubscriptionPlan.objects.all()})
-
-# views.py (new app e.g. billing/views.py)
 import stripe
+import json
 from django.conf import settings
-from django.shortcuts import get_object_or_404, reverse
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.shortcuts import render, get_object_or_404, reverse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-
-from .models import SubscriptionPlan
+from django.utils import timezone
+from .models import SubscriptionPlan, UserSubscription, CustomUser
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+@login_required
+def subscriptions(request):
+    plans = SubscriptionPlan.objects.all()
+    current_sub = request.user.current_subscription
+
+    # Determine if user already had a free trial
+    # (You can check if they ever had a subscription of a paid plan)
+    had_trial = UserSubscription.objects.filter(
+        user=request.user,
+        plan__name__in=['Premium', 'Pro']
+    ).exists()
+
+    monthly_plans = plans.filter(duration_days=30)
+    yearly_plans = plans.filter(duration_days=365)
+
+    for plan in plans:
+        plan.features_list = [f.strip() for f in plan.features.split(',')] if plan.features else []
+        plan.non_features_list = [f.strip() for f in plan.non_features.split(',')] if plan.non_features else []
+
+    context = {
+        'monthly_plans': monthly_plans,
+        'yearly_plans': yearly_plans,
+        'current_subscription': current_sub,
+        'had_trial': had_trial,
+        'stripe_public_key': settings.STRIPE_PUBLISHABLE_KEY,
+    }
+    return render(request, 'accounts/subscriptions/subscriptions.html', context)
+
+
 
 @require_POST
 @login_required
 def create_checkout_session(request, plan_id):
-    plan = get_object_or_404(SubscriptionPlan, pk=plan_id)
-    user = request.user
+    """Create Stripe checkout session (with debug logging)"""
 
-    # Ensure Stripe Customer exists
-    if not getattr(user, "stripe_customer_id", None):
-        user.create_stripe_customer()
+    trial_days = 14 # Change as needed
+    # later add discount percentage
 
-    success_url = request.build_absolute_uri(reverse("billing:checkout_success")) + "?session_id={CHECKOUT_SESSION_ID}"
-    cancel_url = request.build_absolute_uri(reverse("billing:checkout_cancel"))
+    try:
 
-    session = stripe.checkout.Session.create(
-        customer=user.stripe_customer_id,
-        payment_method_types=["card"],
-        line_items=[{"price": plan.stripe_price_id, "quantity": 1}],
-        mode="subscription",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        # optional: metadata to help link session -> user
-        metadata={"user_id": str(user.id)},
-    )
+        plan = get_object_or_404(SubscriptionPlan, pk=plan_id)
+        user = request.user
 
-    return JsonResponse({"sessionId": session.id})
+        # Ensure Stripe Customer exists
+        if not user.stripe_customer_id:
+            user.create_stripe_customer()
 
-# billing/views.py
-import stripe, json
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest
-from django.utils import timezone
-from .models import UserSubscription, SubscriptionPlan, CustomUser
+        success_url = f"{settings.SITE_URL}{reverse('accounts:checkout_success')}?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{settings.SITE_URL}{reverse('accounts:checkout_cancel')}"
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+        session = stripe.checkout.Session.create(
+            customer=user.stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': plan.stripe_price_id,
+                'quantity': 1,  # must be >= 1
+            }],
+            mode='subscription',
+            subscription_data={
+                'trial_period_days': trial_days
+            },
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                'user_id': str(user.id),
+                'plan_id': str(plan.id)
+            },
+        )
+
+        print("[DEBUG] Checkout session successfully created.")
+        print(f"[DEBUG] Session ID: {session.id}")
+        print("=== Stripe Checkout Session Debug End ===\n")
+
+        return JsonResponse({'sessionId': session.id})
+
+    except Exception as e:
+        print("\n❌ Stripe Checkout Error:", str(e))
+        print(traceback.format_exc())
+        print("=== Stripe Checkout Session Debug End (ERROR) ===\n")
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+
+@login_required
+def checkout_success(request):
+    """Handle successful checkout"""
+    session_id = request.GET.get('session_id')
+    context = {
+        'session_id': session_id,
+        'message': 'Subscription activated successfully!'
+    }
+    return render(request, 'accounts/subscriptions/success.html', context)
+
+
+@login_required
+def checkout_cancel(request):
+    """Handle cancelled checkout"""
+    context = {
+        'message': 'Checkout was cancelled. You have not been charged.'
+    }
+    return render(request, 'accounts/subscriptions/cancel.html', context)
+
 
 @csrf_exempt
 def stripe_webhook(request):
+    """Handle Stripe webhook events"""
     payload = request.body
-    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+    
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
     except ValueError:
-        return HttpResponseBadRequest("Invalid payload")
+        return HttpResponseBadRequest('Invalid payload')
     except stripe.error.SignatureVerificationError:
-        return HttpResponseBadRequest("Invalid signature")
+        return HttpResponseBadRequest('Invalid signature')
 
-    typ = event["type"]
-    data = event["data"]["object"]
+    event_type = event['type']
+    data = event['data']['object']
 
-    # 1) checkout.session.completed -> create local subscription record
-    if typ == "checkout.session.completed":
-        session = data
-        # subscription id will be present for subscription mode
-        stripe_sub_id = session.get("subscription")
-        stripe_customer_id = session.get("customer")
-
-        # if subscription id present, fetch it to get period end and price
-        if stripe_sub_id:
-            sub = stripe.Subscription.retrieve(stripe_sub_id)
-            price_id = sub["items"]["data"][0]["price"]["id"]
-            # find local plan
-            plan = SubscriptionPlan.objects.filter(stripe_price_id=price_id).first()
-            user = CustomUser.objects.filter(stripe_customer_id=stripe_customer_id).first()
-            if user and plan:
-                # idempotency: update or create
-                UserSubscription.objects.update_or_create(
-                    stripe_subscription_id=stripe_sub_id,
-                    defaults={
-                        "user": user,
-                        "plan": plan,
-                        "stripe_customer_id": stripe_customer_id,
-                        "is_active": True,
-                        "start_date": timezone.now(),
-                        "end_date": timezone.datetime.fromtimestamp(
-                            sub["current_period_end"], tz=timezone.utc
-                        ),
-                    },
-                )
-
-    # 2) invoice.payment_succeeded -> ensure subscription active / extend end_date
-    elif typ == "invoice.payment_succeeded":
-        invoice = data
-        sub_id = invoice.get("subscription")
-        if sub_id:
-            sub = stripe.Subscription.retrieve(sub_id)
-            # update local record
-            us = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
-            if us:
-                us.is_active = True
-                us.end_date = timezone.datetime.fromtimestamp(sub["current_period_end"], tz=timezone.utc)
-                us.save(update_fields=["is_active", "end_date"])
-
-    # 3) invoice.payment_failed -> mark past_due or notify user
-    elif typ == "invoice.payment_failed":
-        invoice = data
-        sub_id = invoice.get("subscription")
-        if sub_id:
-            us = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
-            if us:
-                # mark not active / or set a grace flag — choose policy for your app
-                us.is_active = False
-                us.save(update_fields=["is_active"])
-
-    # 4) customer.subscription.deleted or customer.subscription.updated
-    elif typ in ("customer.subscription.deleted", "customer.subscription.updated"):
-        sub = data
-        sub_id = sub.get("id")
-        us = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
-        if us:
-            status = sub.get("status")
-            us.is_active = status in ("active", "trialing")
-            us.end_date = timezone.datetime.fromtimestamp(sub["current_period_end"], tz=timezone.utc)
-            us.save(update_fields=["is_active", "end_date"])
+    # Handle checkout completion
+    if event_type == 'checkout.session.completed':
+        handle_checkout_completed(data)
+    
+    # Handle successful payment
+    elif event_type == 'invoice.payment_succeeded':
+        handle_payment_succeeded(data)
+    
+    # Handle failed payment
+    elif event_type == 'invoice.payment_failed':
+        handle_payment_failed(data)
+    
+    # Handle subscription updates/deletions
+    elif event_type in ('customer.subscription.deleted', 'customer.subscription.updated'):
+        handle_subscription_changed(data)
 
     return HttpResponse(status=200)
 
+
+def handle_checkout_completed(session):
+    """Process completed checkout session"""
+    stripe_sub_id = session.get('subscription')
+    stripe_customer_id = session.get('customer')
+
+    if stripe_sub_id:
+        sub = stripe.Subscription.retrieve(stripe_sub_id)
+        price_id = sub['items']['data'][0]['price']['id']
+        
+        plan = SubscriptionPlan.objects.filter(stripe_price_id=price_id).first()
+        user = CustomUser.objects.filter(stripe_customer_id=stripe_customer_id).first()
+        
+        if user and plan:
+            UserSubscription.objects.update_or_create(
+                stripe_subscription_id=stripe_sub_id,
+                defaults={
+                    'user': user,
+                    'plan': plan,
+                    'stripe_customer_id': stripe_customer_id,
+                    'is_active': True,
+                    'start_date': timezone.now(),
+                    'end_date': timezone.datetime.fromtimestamp(
+                        sub['current_period_end'], tz=timezone.utc
+                    ),
+                }
+            )
+
+
+def handle_payment_succeeded(invoice):
+    """Process successful payment"""
+    sub_id = invoice.get('subscription')
+    if sub_id:
+        sub = stripe.Subscription.retrieve(sub_id)
+        user_sub = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
+        
+        if user_sub:
+            user_sub.is_active = True
+            user_sub.end_date = timezone.datetime.fromtimestamp(
+                sub['current_period_end'], tz=timezone.utc
+            )
+            user_sub.save(update_fields=['is_active', 'end_date'])
+
+
+def handle_payment_failed(invoice):
+    """Process failed payment"""
+    sub_id = invoice.get('subscription')
+    if sub_id:
+        user_sub = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
+        if user_sub:
+            user_sub.is_active = False
+            user_sub.save(update_fields=['is_active'])
+
+
+def handle_subscription_changed(subscription):
+    """Process subscription update or deletion"""
+    sub_id = subscription.get('id')
+    user_sub = UserSubscription.objects.filter(stripe_subscription_id=sub_id).first()
+    
+    if user_sub:
+        status = subscription.get('status')
+        user_sub.is_active = status in ('active', 'trialing')
+        user_sub.end_date = timezone.datetime.fromtimestamp(
+            subscription['current_period_end'], tz=timezone.utc
+        )
+        user_sub.save(update_fields=['is_active', 'end_date'])
+
+
+@login_required
+@require_POST
+def cancel_subscription(request):
+    """Cancel user's active subscription"""
+    current_sub = request.user.current_subscription
+    
+    if not current_sub:
+        return JsonResponse({'error': 'No active subscription found'}, status=400)
+    
+    try:
+        # Cancel at period end (don't refund)
+        stripe.Subscription.modify(
+            current_sub.stripe_subscription_id,
+            cancel_at_period_end=True
+        )
+        return JsonResponse({'message': 'Subscription will cancel at period end'})
+    
+    except Exception as e:
+        print("Stripe Checkout Error: ", str(e))
+        return JsonResponse({'error': str(e)}, status=400)
 
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
@@ -375,3 +485,17 @@ def onboarding_view(request):
         "subscription_features": get_subscription_features(),
     }
     return render(request, "accounts/onboarding.html", context)
+
+@login_required
+def customer_portal(request):
+    user = request.user
+    customer_id = user.create_stripe_customer()  # ensures they have one
+
+    # Create the portal session
+    session = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=request.build_absolute_uri('/dashboard/'),  # where Stripe redirects after they're done
+        # Possibly change return URL
+    )
+
+    return redirect(session.url)

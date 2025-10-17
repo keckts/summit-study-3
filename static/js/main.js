@@ -1,3 +1,2 @@
-import { setUpAiWidget } from './main/ai_creator.js'
-
-
+"use strict";
+console.log('Hello, Summit Study!');

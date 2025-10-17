@@ -11,8 +11,16 @@ urlpatterns = [
     path('logout-page/', views.logout_view, name='logout'),
     path('onboarding/', views.onboarding_view, name='onboarding'),
 
+    path('verify-password/', views.verify_password, name='verify_password'),
+
     path('subscriptions/', views.subscriptions, name='subscriptions'),
     path('subscriptions/checkout/<int:plan_id>/', views.create_checkout_session, name='create_checkout_session'),
-    path('verify-password/', views.verify_password, name='verify_password'),
+    path('subscriptions/success/', views.checkout_success, name='checkout_success'),
+    path('subscriptions/cancel/', views.checkout_cancel, name='checkout_cancel'),
+    path('subscriptions/cancel-subscription/', views.cancel_subscription, name='cancel_subscription'),
+    
+    # Webhook (no authentication required)
+    path('webhook/stripe/', views.stripe_webhook, name='stripe_webhook'),
+    path('customer-portal/', views.customer_portal, name='customer_portal'),
     
 ]

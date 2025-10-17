@@ -1,0 +1,310 @@
+<!-- success.html -->
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .success-container {
+        max-width: 600px;
+        margin: 80px auto;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        animation: scaleIn 0.5s ease;
+    }
+
+    .success-icon svg {
+        width: 50px;
+        height: 50px;
+        stroke: white;
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .success-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .success-message {
+        font-size: 1.1rem;
+        color: #666;
+        line-height: 1.8;
+        margin-bottom: 30px;
+    }
+
+    .success-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-success-primary {
+        padding: 15px 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: opacity 0.3s;
+        display: inline-block;
+    }
+
+    .btn-success-primary:hover {
+        opacity: 0.9;
+        color: white;
+    }
+
+    .btn-success-secondary {
+        padding: 15px 40px;
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s;
+        display: inline-block;
+    }
+
+    .btn-success-secondary:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    .success-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 30px 0;
+        text-align: left;
+    }
+
+    .success-details h4 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+    }
+
+    .success-details ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .success-details li {
+        padding: 8px 0;
+        color: #555;
+        display: flex;
+        align-items: center;
+    }
+
+    .success-details li:before {
+        content: "✓";
+        color: #667eea;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="success-container">
+    <div class="success-icon">
+        <svg viewBox="0 0 50 50">
+            <path d="M 10 25 L 20 35 L 40 15" />
+        </svg>
+    </div>
+
+    <h1 class="success-title">Payment Successful!</h1>
+    
+    <p class="success-message">
+        {{ message|default:"Thank you for subscribing! Your payment has been processed successfully." }}
+    </p>
+
+    <div class="success-details">
+        <h4>What happens next?</h4>
+        <ul>
+            <li>Your subscription has been activated immediately</li>
+            <li>You now have full access to all premium features</li>
+            <li>A confirmation email has been sent to your inbox</li>
+            <li>You can manage your subscription anytime from your account</li>
+        </ul>
+    </div>
+
+    <div class="success-buttons">
+        <a href="/" class="btn-success-primary">Go to Dashboard</a>
+        <a href="{% url 'subscriptions' %}" class="btn-success-secondary">Manage Subscription</a>
+    </div>
+</div>
+{% endblock %}
+
+
+<!-- cancel.html -->
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .cancel-container {
+        max-width: 600px;
+        margin: 80px auto;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .cancel-icon {
+        width: 100px;
+        height: 100px;
+        background: #6c757d;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        animation: scaleIn 0.5s ease;
+    }
+
+    .cancel-icon svg {
+        width: 50px;
+        height: 50px;
+        stroke: white;
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .cancel-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .cancel-message {
+        font-size: 1.1rem;
+        color: #666;
+        line-height: 1.8;
+        margin-bottom: 30px;
+    }
+
+    .cancel-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-cancel-primary {
+        padding: 15px 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: opacity 0.3s;
+        display: inline-block;
+    }
+
+    .btn-cancel-primary:hover {
+        opacity: 0.9;
+        color: white;
+    }
+
+    .btn-cancel-secondary {
+        padding: 15px 40px;
+        background: white;
+        color: #6c757d;
+        border: 2px solid #6c757d;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s;
+        display: inline-block;
+    }
+
+    .btn-cancel-secondary:hover {
+        background: #6c757d;
+        color: white;
+    }
+
+    .cancel-info {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 30px 0;
+        color: #856404;
+    }
+
+    .cancel-info strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="cancel-container">
+    <div class="cancel-icon">
+        <svg viewBox="0 0 50 50">
+            <path d="M 15 15 L 35 35 M 35 15 L 15 35" />
+        </svg>
+    </div>
+
+    <h1 class="cancel-title">Checkout Cancelled</h1>
+    
+    <p class="cancel-message">
+        {{ message|default:"No worries! You can subscribe anytime you're ready." }}
+    </p>
+
+    <div class="cancel-info">
+        <strong>No charges were made</strong>
+        Your payment information was not processed and you have not been charged.
+    </div>
+
+    <p class="cancel-message">
+        If you experienced any issues during checkout or have questions about our plans, 
+        please don't hesitate to contact our support team.
+    </p>
+
+    <div class="cancel-buttons">
+        <a href="{% url 'subscriptions' %}" class="btn-cancel-primary">View Plans Again</a>
+        <a href="/" class="btn-cancel-secondary">Go Home</a>
+    </div>
+</div>
+{% endblock %}
